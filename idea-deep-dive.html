@@ -1,0 +1,312 @@
+<title>NYC Idea Deep Dive</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: companion to the prep sheet. Subway-sign header, three line-colored tabs (one per idea), single reading column. */
+:root{
+  --bg:#f6f6f3; --surface:#ffffff; --fg:#17181a; --muted:#5b5e63; --line:#dcdcd6;
+  --sign:#111213; --sign-fg:#f4f4f2; --code-bg:#ececE6;
+  --noise:#b933ad; --snap:#00933c; --heat:#ee352e; --warn:#b06a00; --accent:#0039a6;
+  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --body:"Instrument Sans","Helvetica Neue",Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141517; --surface:#1d1f22; --fg:#ececea; --muted:#a3a6ab; --line:#2f3236;
+  --sign:#050505; --code-bg:#26292d; --noise:#d36bcb; --snap:#2fbf68; --heat:#ff6b64; --warn:#f0a43a; --accent:#6f9cf0; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141517; --surface:#1d1f22; --fg:#ececea; --muted:#a3a6ab; --line:#2f3236;
+  --sign:#050505; --code-bg:#26292d; --noise:#d36bcb; --snap:#2fbf68; --heat:#ff6b64; --warn:#f0a43a; --accent:#6f9cf0; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.6 var(--body)}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:780px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.sign{background:var(--sign);color:var(--sign-fg)}
+header.sign .wrap{padding-block:26px 22px;display:grid;gap:8px}
+.stripe{height:6px;background:linear-gradient(90deg,var(--noise) 0 33.3%,var(--snap) 0 66.6%,var(--heat) 0)}
+h1{font:800 clamp(28px,6vw,42px)/1.05 var(--display);margin:0;text-wrap:balance}
+.sub{color:#c9cacc;font-size:15px;margin:0;max-width:62ch}
+h2{font:700 24px/1.2 var(--display);margin:30px 0 10px;text-wrap:balance}
+h3{font:700 18px/1.3 var(--display);margin:26px 0 8px}
+p{margin:0 0 12px;max-width:68ch}
+ul,ol{margin:0 0 14px;padding-left:22px;max-width:68ch} li{margin-bottom:6px}
+.muted{color:var(--muted)}
+.tbl{overflow-x:auto;margin:8px 0 16px}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 12px var(--body);color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+.stars{letter-spacing:2px;white-space:nowrap}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 4px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding-block:10px;z-index:2;border-bottom:1px solid var(--line)}
+.tab{font:600 15px var(--body);display:inline-flex;align-items:center;gap:8px;padding:7px 14px 7px 7px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.tab .dot{width:22px;height:22px;border-radius:50%;display:inline-grid;place-items:center;color:#fff;font:700 12px var(--display)}
+.tab[aria-selected="true"]{border-color:var(--fg);box-shadow:inset 0 0 0 1px var(--fg)}
+.panel{padding-bottom:20px}
+.hero{border-left:6px solid var(--c);padding:4px 0 4px 16px;margin:18px 0}
+.hero h2{margin:0 0 6px;font-size:28px}
+.hero p{font-size:18px;margin:0}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:14px 0 16px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;min-width:0}
+.stat b{display:block;font:800 26px/1.1 var(--display);font-variant-numeric:tabular-nums;color:var(--c)}
+.stat span{font-size:14px;color:var(--muted)}
+.script{display:grid;gap:0;margin:8px 0 16px;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.beat{display:grid;grid-template-columns:64px 1fr;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line)}
+.beat:last-child{border-bottom:0}
+.beat .t{font:600 13px var(--mono);color:var(--c);font-variant-numeric:tabular-nums;padding-top:2px}
+.beat p{margin:0}
+.flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px;margin:10px 0 16px}
+.flow .step{flex:1 1 140px;background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--c);border-radius:6px;padding:9px 11px;font-size:14px;min-width:0}
+.flow .step b{display:block;font:700 13px var(--display);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+.roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin:8px 0 16px}
+.role{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;min-width:0}
+.role h4{margin:0 0 6px;font:700 15px var(--display)}
+.role ul{margin:0;padding-left:18px;font-size:14.5px}
+.you{border-color:var(--c);box-shadow:inset 0 0 0 1px var(--c)}
+.prompt{background:var(--code-bg);border-radius:8px;margin:8px 0 14px;overflow:hidden}
+.prompt .bar{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 10px 6px 12px;font:600 13px var(--body);color:var(--muted)}
+.prompt button{font:600 13px var(--body);border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:6px;padding:4px 10px;cursor:pointer}
+.prompt pre{margin:0;padding:4px 12px 12px;white-space:pre-wrap;font:13.5px/1.55 var(--mono);overflow-wrap:anywhere}
+.risk{display:grid;gap:8px;margin:8px 0 16px}
+.risk div{border-left:4px solid var(--warn);background:var(--surface);border-radius:4px;padding:9px 12px;font-size:15px}
+.risk b{display:block}
+.callout{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--c,var(--accent));border-radius:6px;padding:12px 14px;margin:14px 0}
+.callout p:last-child{margin:0}
+.pick{display:grid;gap:10px;margin:10px 0 18px}
+.pick div{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+footer{color:var(--muted);font-size:13px;padding-block:20px 40px;border-top:1px solid var(--line);margin-top:20px}
+@media (max-width:480px){.beat{grid-template-columns:52px 1fr;gap:8px}}
+</style>
+
+<header class="sign">
+  <div class="stripe"></div>
+  <div class="wrap">
+    <h1>NYC Idea Deep Dive</h1>
+    <p class="sub">Three original builds at the level of the Daytona top 3. Each has real numbers, a demo script, a build plan by role, Claude Code prompts, and what could break.</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+<h2>Pick in 30 seconds</h2>
+<div class="tbl"><table>
+  <thead><tr><th></th><th>Noise Pulse</th><th>Snap &amp; Solve</th><th>Heat Line</th></tr></thead>
+  <tbody>
+    <tr><td>Wow on stage</td><td class="stars">★★★</td><td class="stars">★★☆</td><td class="stars">★★☆</td></tr>
+    <tr><td>Chance it works by demo time</td><td class="stars">★★☆</td><td class="stars">★★★</td><td class="stars">★★★</td></tr>
+    <tr><td>Emotional story</td><td class="stars">★★☆</td><td class="stars">★★☆</td><td class="stars">★★★</td></tr>
+    <tr><td>Needs a strong developer</td><td>Yes</td><td>One is enough</td><td>One is enough</td></tr>
+    <tr><td>Like which winner</td><td>Just Standup</td><td>SIGNAL</td><td>Relay</td></tr>
+  </tbody>
+</table></div>
+<div class="pick">
+  <div><b>Your team has a confident developer?</b> Go <b>Noise Pulse</b>. Highest ceiling, and the room takes part.</div>
+  <div><b>Mixed or newer team?</b> Go <b>Snap &amp; Solve</b>. Fewest moving parts, and a photo demo almost never fails.</div>
+  <div><b>Want the strongest story?</b> Go <b>Heat Line</b>. Heat season started Oct 1, and the numbers below hit hard.</div>
+</div>
+<p class="muted">Numbers below come from live NYC 311 data I queried on Oct 19, 2026. The city's data runs about a day behind (latest record: Oct 18, 1:51am).</p>
+
+<div class="tabs" role="tablist" aria-label="Ideas">
+  <button class="tab" role="tab" id="t-noise" aria-controls="noise" aria-selected="true"><span class="dot" style="background:var(--noise)">N</span>Noise Pulse</button>
+  <button class="tab" role="tab" id="t-snap" aria-controls="snap" aria-selected="false"><span class="dot" style="background:var(--snap)">S</span>Snap &amp; Solve</button>
+  <button class="tab" role="tab" id="t-heat" aria-controls="heat" aria-selected="false"><span class="dot" style="background:var(--heat)">H</span>Heat Line</button>
+</div>
+
+<!-- ============ NOISE PULSE ============ -->
+<section class="panel" id="noise" role="tabpanel" aria-labelledby="t-noise" style="--c:var(--noise)">
+  <div class="hero"><h2>Noise Pulse</h2><p>Your phone measures the noise. The city's complaints back you up. AI turns both into evidence that gets acted on.</p></div>
+
+  <h3>The problem, in the city's own numbers</h3>
+  <div class="stats">
+    <div class="stat"><b>32,788</b><span>apartment noise complaints to 311 in the last 30 days</span></div>
+    <div class="stat"><b>12,300</b><span>of those closed as "no evidence of violation." The noise had stopped by the time police came</span></div>
+    <div class="stat"><b>67,000+</b><span>noise complaints of all kinds in 30 days</span></div>
+  </div>
+  <p><b>The insight:</b> people do complain, but by the time someone shows up there's no proof. Noise Pulse captures the proof while it happens and groups neighbors so one strong report replaces 40 that get ignored.</p>
+
+  <h3>How it works</h3>
+  <div class="flow">
+    <div class="step"><b>Sense</b>Scan a QR code. The phone mic measures loudness. No app to install.</div>
+    <div class="step"><b>Map</b>Your reading pins to your block, next to that block's 311 noise history.</div>
+    <div class="step"><b>Decide</b>AI spots the pattern: time, day, source type, how many neighbors.</div>
+    <div class="step"><b>Act</b>Drafts one combined, evidence-backed complaint for the block.</div>
+    <div class="step"><b>Follow up</b>Next night, it checks whether readings dropped.</div>
+  </div>
+
+  <h3>3-minute demo script</h3>
+  <div class="script">
+    <div class="beat"><span class="t">0:00</span><p><b>Hook.</b> "Raise your hand if a neighbor's noise kept you up this year." (Hands go up.) "Last month 12,300 noise complaints closed as <i>no evidence</i>. The noise was real. The proof wasn't."</p></div>
+    <div class="beat"><span class="t">0:30</span><p><b>Audience moment.</b> QR code on screen. "Scan this. On three, everybody make noise." The big screen's map pulses and readings stack up live.</p></div>
+    <div class="beat"><span class="t">1:15</span><p><b>Zoom out.</b> Switch to a real block. The map shows that block's 311 noise history plus the night's readings.</p></div>
+    <div class="beat"><span class="t">1:45</span><p><b>AI moment.</b> Tap "Build report." AI writes: "Fri and Sat 11pm–2am, average 82, 14 neighbors, 31 past complaints, likely commercial source." Ready for 311 or the community board.</p></div>
+    <div class="beat"><span class="t">2:20</span><p><b>Business.</b> Free for neighbors. <b>Pro $4.99/mo:</b> a noise report for any address before you sign a lease, plus alerts. Paywall powered by RevenueCat.</p></div>
+    <div class="beat"><span class="t">2:45</span><p><b>Close.</b> "Proof, not complaints." Thank the judges.</p></div>
+  </div>
+
+  <h3>Who does what</h3>
+  <div class="roles">
+    <div class="role"><h4>Developer 1: phone side</h4><ul><li>QR page that asks for the mic</li><li>Live loudness meter</li><li>Sends readings plus location</li></ul></div>
+    <div class="role"><h4>Developer 2: map + data</h4><ul><li>Live map on the big screen</li><li>Pull 311 noise for a block</li><li>Shared live readings</li></ul></div>
+    <div class="role"><h4>Developer 3 (if any): AI report</h4><ul><li>Claude writes the block report</li><li>Pro paywall screen</li></ul></div>
+    <div class="role you"><h4>You: product + pitch</h4><ul><li>Pick the real demo block from the data</li><li>Write the report wording AI should match</li><li>Test on iPhone <i>and</i> Android</li><li>Slides, QR code, rehearse the "make noise" moment</li></ul></div>
+  </div>
+
+  <h3>Prompts to paste into Claude Code</h3>
+  <div class="prompt"><div class="bar">1 · Starter app<button type="button">Copy</button></div><pre>Build a Next.js app I can deploy to Vercel called Noise Pulse. Two pages:
+1) /meter (opened on a phone from a QR code): a big "Start measuring" button that requests microphone access with echoCancellation, noiseSuppression and autoGainControl set to false. Show a live loudness bar and a number from 0-100 (relative loudness, computed with the Web Audio AnalyserNode RMS). Every 2 seconds, send {loudness, lat, lng, timestamp} to an API route. Ask for location once; if denied, use Pursuit HQ in Long Island City as the default.
+2) /wall (shown on the big screen): a Leaflet map with OpenStreetMap tiles, centered on NYC, that shows every reading from the last 5 minutes as a pulsing circle sized by loudness, and a live counter of phones connected.
+Keep readings in memory on the server for now. Make it look good on a phone. Explain each step to me in plain English as you go.</pre></div>
+  <div class="prompt"><div class="bar">2 · Add city data<button type="button">Copy</button></div><pre>Add NYC 311 noise history to the /wall map. When I click anywhere on the map, query https://data.cityofnewyork.us/resource/erm2-nwe9.json with SoQL: complaint_type starts with 'Noise', within_circle(location, lat, lng, 200), created_date in the last 90 days. Show a side panel with the total count, a breakdown by complaint_type, and a small bar chart by hour of day. No API key needed.</pre></div>
+  <div class="prompt"><div class="bar">3 · AI report + Pro paywall<button type="button">Copy</button></div><pre>Add a "Build block report" button to the side panel. It sends the 311 breakdown plus tonight's live readings for that area to Claude (model claude-sonnet-5-5) through a server API route, using ANTHROPIC_API_KEY from an environment variable (never in the browser). Claude returns a short, factual report: when the noise happens, how loud, how many neighbors, likely source, and a ready-to-send complaint paragraph. Then add a "Pro" screen: free shows the report for your block only; Pro ($4.99/mo) unlocks any address plus alerts. The Pro button opens our RevenueCat web purchase link from an environment variable.</pre></div>
+
+  <h3>What could break</h3>
+  <div class="risk">
+    <div><b>Phones give relative loudness, not true decibels.</b>Browsers can't calibrate the mic, and iPhones ignore the "turn off auto-volume" setting. Say "loudness score" on screen, never "dB," unless a judge asks.</div>
+    <div><b>The mic only works on a secure link.</b>It must be the Vercel https link. Opening it from a laptop's local address on a phone will fail.</div>
+    <div><b>Venue Wi-Fi with 40 phones.</b>Do the audience moment with 5–10 phones, and have a teammate's phone already connected as backup.</div>
+    <div><b>Live updates across phones.</b>This is the hardest part. If it fights you past the halfway mark, have the wall refresh every 2 seconds instead. It looks the same on stage.</div>
+  </div>
+</section>
+
+<!-- ============ SNAP & SOLVE ============ -->
+<section class="panel" id="snap" role="tabpanel" aria-labelledby="t-snap" style="--c:var(--snap)" hidden>
+  <div class="hero"><h2>Snap &amp; Solve</h2><p>Take a photo of what's broken. AI tells you who fixes it, whether neighbors already reported it, and keeps pushing until it's fixed.</p></div>
+
+  <h3>The problem, in the city's own numbers</h3>
+  <div class="stats">
+    <div class="stat"><b>37%</b><span>of streetlight reports from July 2026 are still not closed three months later (1,183 of 3,212)</span></div>
+    <div class="stat"><b>7,213</b><span>street-condition reports (potholes and similar) in 30 days</span></div>
+    <div class="stat"><b>~200</b><span>311 complaint types. Most people don't know which one to pick</span></div>
+  </div>
+  <p><b>The insight:</b> reporting is confusing, duplicates pile up, and nobody follows up. Snap &amp; Solve fixes all three: it picks the category for you, merges you with neighbors who already reported, and keeps pushing after the report is filed. That last step is the Relay idea.</p>
+
+  <h3>How it works</h3>
+  <div class="flow">
+    <div class="step"><b>Sense</b>Snap a photo. The phone camera opens straight from the web page.</div>
+    <div class="step"><b>Decide</b>Claude looks at the photo: what it is, how serious, which agency and 311 category.</div>
+    <div class="step"><b>Check</b>Searches 311 within 150 m for the same issue. Already reported? Joins that report instead.</div>
+    <div class="step"><b>Act</b>Writes the report, ready to send, with photo and location.</div>
+    <div class="step"><b>Follow up</b>Still open after X days? Drafts an escalation to the council member with the full history.</div>
+  </div>
+
+  <h3>3-minute demo script</h3>
+  <div class="script">
+    <div class="beat"><span class="t">0:00</span><p><b>Hook.</b> Photo of a dark street. "This streetlight was reported in July. It's still out. Over a third of July's streetlight reports are."</p></div>
+    <div class="beat"><span class="t">0:30</span><p><b>Live snap.</b> Hand a judge your phone and a printed photo of a pothole. They snap it.</p></div>
+    <div class="beat"><span class="t">0:45</span><p><b>AI moment.</b> About 5 seconds later: "Pothole, high severity, DOT, category Street Condition." Then: "3 neighbors already reported this since Sept 2. Join them?"</p></div>
+    <div class="beat"><span class="t">1:30</span><p><b>Follow-up.</b> Jump to a report that's 30 days old. It shows "Still open," with a drafted escalation to the council member listing every date.</p></div>
+    <div class="beat"><span class="t">2:15</span><p><b>Business.</b> Free for residents. <b>Pro for building managers and business districts ($19/mo):</b> track every issue on your blocks in one dashboard. RevenueCat paywall.</p></div>
+    <div class="beat"><span class="t">2:45</span><p><b>Close.</b> "Don't just report it. Get it fixed."</p></div>
+  </div>
+
+  <h3>Who does what</h3>
+  <div class="roles">
+    <div class="role"><h4>Developer 1: snap + AI</h4><ul><li>Camera upload page</li><li>Claude reads the photo and returns structured results</li></ul></div>
+    <div class="role"><h4>Developer 2: city data</h4><ul><li>Nearby duplicate search</li><li>Report status and age</li><li>Escalation draft</li></ul></div>
+    <div class="role"><h4>Developer 3 (if any): polish</h4><ul><li>"My reports" timeline</li><li>Pro dashboard and paywall</li></ul></div>
+    <div class="role you"><h4>You: product + pitch</h4><ul><li>Find 3 real open reports near Pursuit for the demo</li><li>Print 3 test photos (pothole, dead streetlight, trash)</li><li>Test that AI picks the right category for each</li><li>Slides, rehearse handing the phone to a judge</li></ul></div>
+  </div>
+
+  <h3>Prompts to paste into Claude Code</h3>
+  <div class="prompt"><div class="bar">1 · Snap + AI<button type="button">Copy</button></div><pre>Build a mobile-first Next.js app I can deploy to Vercel called Snap & Solve. Home screen: one big "Snap a problem" button using an input with accept="image/*" capture="environment", and it asks for location. Send the photo to a server API route that calls Claude (model claude-sonnet-5-5) with vision, using ANTHROPIC_API_KEY from an environment variable (never in the browser). Claude must return JSON: issue (short name), severity (low/medium/high), agency (DOT, DSNY, DEP, NYPD, etc.), complaint_type matching NYC 311 names (e.g. "Street Condition", "Street Light Condition", "Dirty Condition", "Rodent"), and a one-sentence plain-English description. If the photo isn't a city problem, say so politely. Show the result as a clean card. Explain each step to me in plain English as you go.</pre></div>
+  <div class="prompt"><div class="bar">2 · Duplicate check<button type="button">Copy</button></div><pre>After Claude returns the complaint_type, query https://data.cityofnewyork.us/resource/erm2-nwe9.json with SoQL: complaint_type = that value, within_circle(location, lat, lng, 150), created_date in the last 60 days, ordered newest first, limit 10. If there are matches, show "Already reported N times since [first date]" with each report's status and how many days it has been open, and a "Join these neighbors" button. If none, show "You're the first to report this" and a ready-to-send report draft.</pre></div>
+  <div class="prompt"><div class="bar">3 · Follow-up + Pro<button type="button">Copy</button></div><pre>Add a "My reports" page saving reports in localStorage. For any report open longer than 14 days, show a "Still not fixed" badge and an "Escalate" button. It asks Claude to draft a short, polite letter to the local City Council member listing the dates, the photo description and the number of neighbor reports. For the demo, add a "Load demo reports" button that fills in 3 example reports with different ages. Add a Pro screen for building managers ($19/mo, track every block) whose button opens our RevenueCat web purchase link from an environment variable.</pre></div>
+
+  <h3>What could break</h3>
+  <div class="risk">
+    <div><b>AI picks the wrong category.</b>Test your 3 printed photos early. If one keeps failing, drop it from the demo.</div>
+    <div><b>Location indoors is fuzzy.</b>For the stage demo, add a "demo location" switch set to a real street with known open reports.</div>
+    <div><b>Real 311 submission isn't public.</b>Don't promise it. Say "ready to send." The follow-up is the part that wins.</div>
+    <div><b>API key cost.</b>Each photo is one Claude call, a few cents at most. Someone on the team needs an Anthropic API key with a little credit.</div>
+  </div>
+</section>
+
+<!-- ============ HEAT LINE ============ -->
+<section class="panel" id="heat" role="tabpanel" aria-labelledby="t-heat" style="--c:var(--heat)" hidden>
+  <div class="hero"><h2>Heat Line</h2><p>One message starts it. The agent organizes the building, builds the evidence, and checks back until the heat is on.</p></div>
+
+  <h3>The problem, in the city's own numbers</h3>
+  <div class="stats">
+    <div class="stat"><b>8,106</b><span>no-heat / no-hot-water complaints in the first 18 days of heat season (Oct 1–18)</span></div>
+    <div class="stat"><b>83</b><span>complaints from a single Brooklyn building in those 18 days</span></div>
+    <div class="stat"><b>341,824</b><span>heat complaints last season (Oct 2025–May 2026)</span></div>
+  </div>
+  <p><b>The insight:</b> tenants in the same building complain one by one, without evidence, and give up. The law is clear: 68°F inside from 6am–10pm when it's below 55°F outside, and 62°F overnight all season. Heat Line turns scattered complaints into a building-wide case that doesn't close until a tenant says the heat is back.</p>
+
+  <h3>How it works</h3>
+  <div class="flow">
+    <div class="step"><b>Sense</b>A tenant messages "no heat," plus the indoor temperature if they have it.</div>
+    <div class="step"><b>Decide</b>Agent looks up the building's heat history and today's outdoor temperature. Is this a legal violation right now?</div>
+    <div class="step"><b>Organize</b>Asks neighbors who signed up: "Heat out for you too?"</div>
+    <div class="step"><b>Act</b>Builds a timeline and drafts the HPD complaint and a landlord letter.</div>
+    <div class="step"><b>Follow up</b>Every 12 hours: "Heat back yet?" Stays open until a tenant confirms.</div>
+  </div>
+
+  <h3>3-minute demo script</h3>
+  <div class="script">
+    <div class="beat"><span class="t">0:00</span><p><b>Hook.</b> "Heat season started 18 days ago. One building in Brooklyn has already filed 83 complaints. 83. Still cold."</p></div>
+    <div class="beat"><span class="t">0:30</span><p><b>Live chat.</b> Judge scans a QR code and types "no heat, it's 61 inside" as a tenant of a real building.</p></div>
+    <div class="beat"><span class="t">0:50</span><p><b>AI moment.</b> Agent replies: "It's 49°F outside, so your landlord must keep it at 68°F. That's a violation. Your building had 12 heat complaints this month. I've asked your 4 signed-up neighbors."</p></div>
+    <div class="beat"><span class="t">1:30</span><p><b>Building view.</b> Big screen: neighbor replies come in, a timeline builds, and the HPD complaint is drafted with every date.</p></div>
+    <div class="beat"><span class="t">2:10</span><p><b>The loop.</b> Fast-forward: "12 hours later, heat back yet?" The case stays open until a tenant confirms. "Relief isn't delivered until the tenant says so."</p></div>
+    <div class="beat"><span class="t">2:30</span><p><b>Business.</b> Free for tenants. <b>Tenant associations $9/mo:</b> building-wide dashboard plus evidence packets for housing court. RevenueCat paywall.</p></div>
+  </div>
+
+  <h3>Who does what</h3>
+  <div class="roles">
+    <div class="role"><h4>Developer 1: chat agent</h4><ul><li>Chat screen that looks like texting</li><li>Claude agent with tools</li></ul></div>
+    <div class="role"><h4>Developer 2: data</h4><ul><li>Building lookup from address</li><li>Heat history from 311</li><li>Outdoor temperature (free weather API)</li></ul></div>
+    <div class="role"><h4>Developer 3 (if any): building board</h4><ul><li>Neighbor replies and timeline</li><li>Draft letters and Pro paywall</li></ul></div>
+    <div class="role you"><h4>You: product + pitch</h4><ul><li>Pick the demo building from real data</li><li>Write the neighbor message wording</li><li>Check the legal temperatures shown are right</li><li>Play the "tenant" in rehearsal; slides</li></ul></div>
+  </div>
+
+  <h3>Prompts to paste into Claude Code</h3>
+  <div class="prompt"><div class="bar">1 · Chat agent<button type="button">Copy</button></div><pre>Build a Next.js app I can deploy to Vercel called Heat Line. Main screen looks like a text-message thread on a phone. The tenant types an address and a message like "no heat, 61 inside". A server API route runs a Claude agent (model claude-sonnet-5-5, ANTHROPIC_API_KEY from an environment variable, never in the browser) with these tools:
+- get_heat_history(address): query https://data.cityofnewyork.us/resource/erm2-nwe9.json for complaint_type = 'HEAT/HOT WATER' at that incident_address since Oct 1 and over the last 12 months; return counts and dates.
+- get_outdoor_temp(): current NYC temperature from the free Open-Meteo API (no key).
+- check_violation(indoor_temp, outdoor_temp, time): NYC rule, Oct 1-May 31: 6am-10pm indoor must be at least 68F when outdoor is below 55F; 10pm-6am indoor must be at least 62F.
+The agent replies in short, kind, plain English, says whether it's a violation and why, and never gives legal advice beyond stating the rule. Explain each step to me in plain English as you go.</pre></div>
+  <div class="prompt"><div class="bar">2 · Building board<button type="button">Copy</button></div><pre>Add a /building page for the big screen. It shows the building address, the heat-complaint count chart since Oct 1, a list of 4 demo neighbors (apartment numbers only) with their replies arriving one by one ("No heat in 3B", "Same in 5A"), and a timeline that builds automatically. Add a button "Draft HPD complaint + landlord letter" that asks Claude to write both using the timeline. Add a "Case status" box that stays OPEN until a tenant answers "yes heat is back"; include a "Simulate 12 hours later" button that makes the agent send "Is your heat back yet?" in the chat.</pre></div>
+  <div class="prompt"><div class="bar">3 · Pro paywall<button type="button">Copy</button></div><pre>Add a Pro screen for tenant associations ($9/mo): building-wide dashboard, unlimited buildings, and a downloadable evidence packet. Free tenants see their own case only. The Pro button opens our RevenueCat web purchase link from an environment variable. Keep the design warm and calm; people using this are cold and stressed.</pre></div>
+
+  <h3>What could break</h3>
+  <div class="risk">
+    <div><b>Real texting probably won't happen tonight.</b>US text messaging needs carrier registration that takes days, and Twilio trial accounts can only text pre-verified numbers. Use the chat screen that looks like texting, and say "SMS next week."</div>
+    <div><b>Address matching.</b>311 stores addresses in capitals ("23 INDIA STREET"). Pick the demo building in advance and test it.</div>
+    <div><b>Sounding like a lawyer.</b>Show the rule and the facts, not advice. Judges will respect that.</div>
+    <div><b>Neighbors are pretend in the demo.</b>Say so on stage: "Simulated neighbors, real city data." Honesty scores better than a fake that gets caught.</div>
+  </div>
+</section>
+
+<div class="callout" style="--c:var(--accent)">
+  <p><b>Same for all three, before 6:30:</b> one teammate has an Anthropic API key with a few dollars of credit, a Vercel account, and a RevenueCat account with a test web purchase link. Pick your demo location from the data so the stage moment uses a real NYC block. Put a QR code to your live link on the last slide.</p>
+</div>
+
+<footer>Data: NYC 311 Service Requests (erm2-nwe9), queried Oct 19, 2026. Heat rules: NYC Housing Maintenance Code heat season Oct 1–May 31. Mic and texting limits: MDN autoGainControl compatibility, Twilio trial-account docs. Companion to the Build NYC Night prep sheet.</footer>
+</main>
+
+<script>
+(function(){
+  var tabs=[].slice.call(document.querySelectorAll('.tab'));
+  function show(id,focus){
+    tabs.forEach(function(t){var on=t.getAttribute('aria-controls')===id;t.setAttribute('aria-selected',on);document.getElementById(t.getAttribute('aria-controls')).hidden=!on;if(on&&focus)t.focus();});
+    try{localStorage.setItem('idea-tab',id)}catch(e){}
+  }
+  tabs.forEach(function(t,i){
+    t.addEventListener('click',function(){show(t.getAttribute('aria-controls'))});
+    t.addEventListener('keydown',function(e){if(e.key==='ArrowRight'||e.key==='ArrowLeft'){var n=tabs[(i+(e.key==='ArrowRight'?1:tabs.length-1))%tabs.length];show(n.getAttribute('aria-controls'),true)}});
+  });
+  var start=(location.hash||'').slice(1);
+  if(!document.getElementById(start)||!/^(noise|snap|heat)$/.test(start)){try{start=localStorage.getItem('idea-tab')||'noise'}catch(e){start='noise'}}
+  show(/^(noise|snap|heat)$/.test(start)?start:'noise');
+  document.querySelectorAll('.prompt button').forEach(function(b){
+    b.addEventListener('click',function(){
+      var pre=b.closest('.prompt').querySelector('pre');
+      var done=function(){b.textContent='Copied';setTimeout(function(){b.textContent='Copy'},1500)};
+      try{navigator.clipboard.writeText(pre.textContent).then(done,function(){sel(pre)})}catch(e){sel(pre)}
+    });
+  });
+  function sel(el){var r=document.createRange();r.selectNodeContents(el);var s=getSelection();s.removeAllRanges();s.addRange(r)}
+})();
+</script>

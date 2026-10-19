@@ -1,0 +1,322 @@
+<title>Build NYC Night Prep</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;700;800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: subway-signage cheat sheet. Black sign band on top, single reading column, sections marked with line bullets. */
+:root{
+  --bg:#f6f6f3; --surface:#ffffff; --fg:#17181a; --muted:#5b5e63; --line:#dcdcd6;
+  --sign:#111213; --sign-fg:#f4f4f2;
+  --a:#0039a6; --g:#00933c; --o:#ff6319; --y:#fccc0a; --r:#ee352e; --p:#b933ad;
+  --code-bg:#ececE6;
+  --display:"Archivo","Helvetica Neue",Arial,sans-serif;
+  --body:"Instrument Sans","Helvetica Neue",Arial,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141517; --surface:#1d1f22; --fg:#ececea; --muted:#a3a6ab; --line:#2f3236;
+  --sign:#050505; --sign-fg:#f4f4f2; --code-bg:#26292d; --a:#4d7fe0; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141517; --surface:#1d1f22; --fg:#ececea; --muted:#a3a6ab; --line:#2f3236;
+  --sign:#050505; --sign-fg:#f4f4f2; --code-bg:#26292d; --a:#4d7fe0; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.6 var(--body);}
+a{color:var(--a)} a:focus-visible,button:focus-visible{outline:2px solid var(--o);outline-offset:2px}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.sign{background:var(--sign);color:var(--sign-fg)}
+header.sign .wrap{padding-block:28px 24px;display:grid;gap:10px}
+.stripe{height:6px;background:linear-gradient(90deg,var(--a) 0 16.6%,var(--o) 0 33.3%,var(--g) 0 50%,var(--y) 0 66.6%,var(--r) 0 83.3%,var(--p) 0)}
+h1{font:800 clamp(30px,6vw,46px)/1.05 var(--display);margin:0;letter-spacing:-.01em;text-wrap:balance}
+.meta{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:14px;color:#c9cacc}
+.meta b{color:var(--sign-fg);font-weight:600}
+nav.toc{display:flex;flex-wrap:wrap;gap:8px;padding-block:18px 4px}
+nav.toc a{display:inline-flex;align-items:center;gap:7px;text-decoration:none;color:var(--fg);font-size:14px;font-weight:500;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 12px 4px 5px}
+.bullet{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;color:#fff;font:700 13px/1 var(--display);flex:none}
+.bullet.y{color:#111}
+section{padding-block:30px 6px;border-bottom:1px solid var(--line)}
+section:last-of-type{border-bottom:0}
+h2{display:flex;align-items:center;gap:12px;font:700 24px/1.2 var(--display);margin:0 0 12px;text-wrap:balance}
+h2 .bullet{width:34px;height:34px;font-size:17px}
+h3{font:700 17px/1.3 var(--display);margin:22px 0 6px}
+p{margin:0 0 12px;max-width:65ch}
+ul,ol{margin:0 0 14px;padding-left:22px;max-width:65ch} li{margin-bottom:6px}
+.lede{font-size:18px}
+.callout{background:var(--surface);border:1px solid var(--line);border-left:5px solid var(--o);border-radius:6px;padding:14px 16px;margin:16px 0}
+.callout p:last-child{margin:0}
+.terms{display:grid;grid-template-columns:minmax(120px,max-content) 1fr;gap:8px 18px;margin:8px 0 16px}
+.terms dt{font-weight:600}
+.terms dd{margin:0;color:var(--muted);min-width:0}
+@media (max-width:520px){.terms{grid-template-columns:1fr;gap:2px}.terms dd{margin-bottom:10px}}
+.card-list{display:grid;gap:12px;margin:12px 0 18px}
+.idea{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;min-width:0}
+.idea h3{margin:0 0 4px}
+.idea p{margin:0 0 6px;font-size:15px}
+.tag{display:inline-block;font:500 12px/1.4 var(--mono);color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:1px 6px;margin:2px 4px 0 0}
+.money{font-size:14px;color:var(--muted)} .money b{color:var(--fg)}
+code{font:14px var(--mono);background:var(--code-bg);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+.api{display:grid;gap:10px;margin:10px 0 16px}
+.api-row{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:grid;gap:4px;min-width:0}
+.api-row .top{display:flex;flex-wrap:wrap;align-items:center;gap:8px;justify-content:space-between}
+.api-row strong{font-family:var(--display)}
+.pill{font:600 12px/1 var(--body);padding:4px 8px;border-radius:999px;white-space:nowrap}
+.pill.ok{background:color-mix(in srgb,var(--g) 18%,transparent);color:var(--g)}
+.pill.key{background:color-mix(in srgb,var(--y) 30%,transparent);color:var(--fg)}
+.api-row .url{font:13px var(--mono);overflow-wrap:anywhere;color:var(--muted)}
+table{border-collapse:collapse;width:100%;font-size:15px}
+.tbl{overflow-x:auto;margin:8px 0 16px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 13px var(--body);color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+td.t{font-variant-numeric:tabular-nums;white-space:nowrap;font-weight:600}
+.checks{list-style:none;padding:0}
+.checks li{display:flex;gap:10px;align-items:flex-start}
+.checks input{margin-top:5px;width:18px;height:18px;accent-color:var(--g);flex:none}
+.say{font-style:italic;color:var(--muted)}
+footer{color:var(--muted);font-size:13px;padding-block:24px 40px}
+</style>
+
+<header class="sign">
+  <div class="stripe"></div>
+  <div class="wrap">
+    <h1>Build NYC Night: your prep sheet</h1>
+    <div class="meta"><span><b>Mon Oct 19</b> · 6:30pm</span><span><b>Pursuit HQ</b></span><span>Hosts: <b>RevenueCat × Pursuit</b></span><span>Prize: Claude Code / Codex subs</span></div>
+  </div>
+</header>
+
+<main class="wrap">
+<nav class="toc" aria-label="Sections">
+  <a href="#gist"><span class="bullet" style="background:var(--a)">A</span>The night in 60s</a>
+  <a href="#bar"><span class="bullet" style="background:var(--r)">W</span>The bar to beat</a>
+  <a href="#rc"><span class="bullet" style="background:var(--o)">B</span>RevenueCat</a>
+  <a href="#words"><span class="bullet" style="background:var(--g)">C</span>Jargon decoder</a>
+  <a href="#data"><span class="bullet y" style="background:var(--y)">D</span>NYC data</a>
+  <a href="#ideas"><span class="bullet" style="background:var(--r)">E</span>Top-3 ideas</a>
+  <a href="#role"><span class="bullet" style="background:var(--p)">F</span>Your role</a>
+  <a href="#pitch"><span class="bullet" style="background:var(--a)">G</span>Pitch</a>
+  <a href="#check"><span class="bullet" style="background:var(--g)">H</span>Checklist</a>
+</nav>
+
+<section id="gist">
+  <h2><span class="bullet" style="background:var(--a)">A</span>The night in 60 seconds</h2>
+  <p class="lede">You join a mixed team, pick one real problem New Yorkers have, build a small working app that uses free city data, then pitch it to judges.</p>
+  <p>Nobody expects a finished product. Judges reward three things: a <b>real, relatable problem</b>, a <b>demo that actually works</b> (even a tiny one), and a <b>clear story</b> about who it helps. Two of those three are not coding. That is where you shine.</p>
+  <div class="callout"><p><b>Sponsor tip:</b> RevenueCat is hosting. If your pitch has one slide on "how this app makes money" (a free tier and a paid tier), you are speaking the sponsor's language.</p></div>
+</section>
+
+<section id="bar">
+  <h2><span class="bullet" style="background:var(--r)">W</span>The bar to beat: Daytona HackSprint winners</h2>
+  <p>Daytona's HackSprints are one-day AI build sprints (about 5½ hours of hacking, teams of up to 4, 3-minute pitch with a live demo). The latest NYC one was Oct 16, 2026, with 65 projects submitted.</p>
+  <div class="card-list">
+    <div class="idea"><h3>1st place, NYC Oct 16 2026: Just Standup</h3><p>A fitness app for coders who never make it to the gym. It's built around three excuses, each with a fix. <b>"No device":</b> scan a QR code, hold your phone and punch, and each punch splashes paint on a virtual Brooklyn wall. <b>"No place":</b> an AI agent finds real workout spots around NYC. <b>"No coach":</b> film your room and the AI turns your chair, desk and wall into a safe workout.</p><p class="money"><b>Why it won:</b> a personal story everyone in the room recognized, a demo the audience could physically join (no app to install, just a QR code), a New York tie-in, and every sponsor's tool used for a real reason. This was a two-person team, and one of them researches human motion for a living, so the tech was well past one evening's work.</p><span class="tag">Claude</span><span class="tag">phone sensors</span><span class="tag">Daytona</span><span class="tag">Arize</span></div>
+    <div class="idea"><h3>Closest to tonight: Tenant Advocate (AWS prize)</h3><p>Built by <b>one person</b>. It explains your lease in plain English, shows your building's violation history from NYC public records, and keeps a dated log of your issues for any dispute with the landlord.</p><p class="money"><b>Why it matters:</b> it was built on <b>Socrata</b>, the same NYC Open Data system linked in section D. It's almost exactly the "Heat Watch" and "Block Report" ideas below. A solo builder won with it, so a team can too.</p><p class="money"><b>Built by your friend Eric Liu.</b> Ask him before 6:30 which data was hardest to get. His key step was NYC Planning Labs GeoSearch, which turns a typed address into a building record. Don't reuse his code or pitch the same app tonight: pick a different angle, like heat, noise or rats, so it's clearly your team's new work.</p><span class="tag">NYC Open Data</span><span class="tag">HPD violations</span></div>
+  </div>
+  <h3>Every winner from Oct 16</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Prize</th><th>Project</th><th>What it does</th><th>Team</th></tr></thead>
+    <tbody>
+      <tr><td class="t">1st</td><td>Just Standup</td><td>Phone punch game, NYC workout spots, AI room coach</td><td class="t">2</td></tr>
+      <tr><td class="t">2nd</td><td>Relay</td><td>Turns storm and 911 reports into needs, matches them with volunteers, follows up</td><td class="t">1</td></tr>
+      <tr><td class="t">3rd</td><td>SIGNAL</td><td>Tap an NFC sticker in a room, describe a problem, and AI troubleshoots or escalates</td><td class="t">1</td></tr>
+      <tr><td>Daytona + Arize</td><td>SEAL</td><td>An AI agent layer that improves itself</td><td class="t">2</td></tr>
+      <tr><td>ElevenLabs</td><td>Village</td><td>Describe your family or block once, and it builds a care plan, an app and a phone line for each person</td><td class="t">1</td></tr>
+      <tr><td>SurrealDB</td><td>Honest Alpha</td><td>Tests whether AI stock strategies really beat the market</td><td class="t">1</td></tr>
+      <tr><td>Anchor Browser</td><td>Browser Buddy</td><td>Watches a website for bugs and ships fixes</td><td class="t">1</td></tr>
+      <tr><td>AWS</td><td>Tenant Advocate</td><td>Lease explainer and building-violation lookup for renters</td><td class="t">1</td></tr>
+    </tbody>
+  </table></div>
+  <p><b>Pattern:</b> all three top prizes went to an everyday problem a regular person has, not a tool for developers. Six of the eight winners were solo builders. Four helped people living in a city (Relay, SIGNAL, Village, Tenant Advocate), which is exactly tonight's theme.</p>
+  <h3>Earlier sprints, for comparison</h3>
+  <div class="card-list">
+    <div class="idea"><h3>1st place, NYC Nov 2025: 10xhr.ai</h3><p>Helps a non-technical HR person run a tech interview. It turns a job post into a skills checklist, listens to the call, fills in the candidate's skill level live and suggests the next question.</p><p class="money"><b>Under the hood:</b> one web page and 4 AI prompts chained together. Their own write-up says they <i>didn't have time to build the full feature list</i>. They won anyway, because the one core loop worked live.</p><span class="tag">Next.js</span><span class="tag">Gemini</span><span class="tag">real-time</span></div>
+    <div class="idea"><h3>1st place, SF Oct 2025: A/B GPT</h3><p>Fake shoppers tried a broken online store, the AI spotted "can't filter products," wrote the fix and showed the new version. Built in about 5 hours.</p><p class="money"><b>Note:</b> the full loop wasn't finished either. The demo showed one problem found and one fix shipped.</p><span class="tag">Claude Code</span><span class="tag">Browser Use</span></div>
+    <div class="idea"><h3>Other NYC winners</h3><p><b>LeetCourt</b> (practice courtroom with AI voice agents), <b>MindServe</b> (finds why you lose matches from your game videos), <b>PitchBox</b> (auto-records a demo video of any GitHub repo). Each one is a single clear user, a single clear "aha" moment.</p></div>
+  </div>
+  <h3>What that means for tonight</h3>
+  <p>Tonight is shorter (evening only). Copy Just Standup's <i>shape</i>, not its size:</p>
+  <ul>
+    <li><b>Open with a story the judges recognize.</b> Just Standup opened with friends' gym excuses. Yours might be "my building had no heat for 6 days."</li>
+    <li><b>Let the audience touch it.</b> Put a QR code on your last slide so judges open your live app on their own phones.</li>
+    <li><b>One user, one sentence.</b> "A Bronx renter checks their building's heat history before signing a lease."</li>
+    <li><b>One live loop:</b> type an address → real NYC data appears → a plain-English answer. That's the whole demo.</li>
+    <li><b>One "smart" touch:</b> an AI line that summarizes the data ("This building had 14 heat complaints last winter, worse than 80% of the block"). This is your 10xhr moment.</li>
+    <li><b>One money slide plus a mock Pro screen</b> for RevenueCat.</li>
+    <li><b>Online at a real link</b> (Vercel) so judges can tap it.</li>
+  </ul>
+  <div class="callout"><p><b>Skip:</b> logins, user accounts, multiple pages, real payments, a mobile app store build. None of the winners above had those, and each one costs an hour you don't have.</p></div>
+</section>
+
+<section id="rc">
+  <h2><span class="bullet" style="background:var(--o)">B</span>RevenueCat in plain English</h2>
+  <p class="lede">RevenueCat is the <b>cash register for apps</b>. When an app says "Upgrade to Pro for $4.99/month," RevenueCat is very often the thing running that behind the scenes.</p>
+  <h3>The problem it solves</h3>
+  <p>Selling a subscription inside an app is painful. Apple, Google, and the web (Stripe) each have their own rules and their own payment code. RevenueCat wraps all three into one system, so a developer writes the "is this person a paying customer?" check once, and it works on iPhone, Android, and web.</p>
+  <h3>What it gives an app</h3>
+  <ul>
+    <li><b>Paywalls:</b> the "Go Pro" screen. Built in a drag-and-drop editor, and it now has an AI editor you can chat with to design one.</li>
+    <li><b>Subscriptions tracking:</b> who paid, who cancelled, who is on a free trial.</li>
+    <li><b>Web checkout:</b> a no-code payment link you can share, with Apple Pay / Google Pay buttons via Stripe.</li>
+    <li><b>Funnels:</b> multi-step onboarding web pages ending in checkout (launched June 2026).</li>
+    <li><b>Charts &amp; experiments:</b> revenue dashboards, and A/B testing different prices.</li>
+    <li><b>AI toolkit:</b> plugins that let tools like Claude Code set up RevenueCat for you.</li>
+  </ul>
+  <h3>Business model and size</h3>
+  <p>Free until an app makes <b>$2,500/month</b>, then roughly 1% of tracked revenue. Founded 2018 in San Francisco, used by tens of thousands of apps. Competitors you may hear: Adapty, Superwall.</p>
+  <div class="callout"><p><b>Realistic for one night:</b> wiring real App Store payments takes days of approval. Your team does not need that. A mock "Pro" screen in your app, or a RevenueCat web paywall link, plus a slide explaining the paid tier, is plenty.</p></div>
+  <h3>Smart questions to ask the RevenueCat people</h3>
+  <ul>
+    <li>"What's the fastest way to add a paywall to a web app tonight?"</li>
+    <li>"What do the best-converting subscription apps have in common?"</li>
+    <li>"Do you see civic or local apps succeed with subscriptions, or is a different model better?"</li>
+    <li>"What roles do you hire for besides engineers?" (networking)</li>
+  </ul>
+</section>
+
+<section id="words">
+  <h2><span class="bullet" style="background:var(--g)">C</span>Jargon decoder</h2>
+  <p>Words you will hear in the first 20 minutes, in plain terms.</p>
+  <dl class="terms">
+    <dt>API</dt><dd>A menu a website offers to other programs. You "order" data with a web address and get data back.</dd>
+    <dt>Endpoint</dt><dd>One specific item on that menu, a URL that returns one kind of data.</dd>
+    <dt>Open data</dt><dd>Data the city publishes free for anyone: complaints, inspections, trees, crashes.</dd>
+    <dt>JSON</dt><dd>The text format APIs reply in. Looks like a labeled list: <code>{"borough":"BRONX"}</code>.</dd>
+    <dt>API key</dt><dd>A password-like code some APIs require so they know who is asking. Never paste one in a public place.</dd>
+    <dt>Frontend / backend</dt><dd>Frontend is what users see and tap. Backend is the hidden part that fetches and stores data.</dd>
+    <dt>MVP</dt><dd>Minimum viable product: the smallest version that proves the idea works.</dd>
+    <dt>Deploy</dt><dd>Put the app online at a real link so judges can open it. Vercel is a common one-click option.</dd>
+    <dt>Repo / GitHub</dt><dd>The shared folder where the team's code lives, with history of every change.</dd>
+    <dt>SDK</dt><dd>A ready-made code kit from a company (RevenueCat has one) so devs don't start from scratch.</dd>
+    <dt>Paywall</dt><dd>The screen that asks you to pay to unlock features.</dd>
+    <dt>Entitlement</dt><dd>RevenueCat's word for "what this user has unlocked," like <i>Pro</i>.</dd>
+    <dt>Freemium</dt><dd>Free basic version, paid upgrade for extras.</dd>
+    <dt>Scope creep</dt><dd>Adding features until nothing is finished. The #1 hackathon killer.</dd>
+  </dl>
+</section>
+
+<section id="data">
+  <h2><span class="bullet y" style="background:var(--y)">D</span>NYC data you can use tonight</h2>
+  <p>I tested these on Oct 19. Tap the links: each one returns real data in your browser, no sign-up needed (except MTA).</p>
+  <div class="api">
+    <div class="api-row">
+      <div class="top"><strong>311 Service Requests</strong><span class="pill ok">Works · no key</span></div>
+      <span>Every complaint New Yorkers file: noise, rats, no heat, potholes, illegal parking. The richest dataset in the city.</span>
+      <a class="url" href="https://data.cityofnewyork.us/resource/erm2-nwe9.json?$limit=5">data.cityofnewyork.us/resource/erm2-nwe9.json</a>
+    </div>
+    <div class="api-row">
+      <div class="top"><strong>Restaurant Inspections</strong><span class="pill ok">Works · no key</span></div>
+      <span>Health grades (A/B/C) and violations for every restaurant.</span>
+      <a class="url" href="https://data.cityofnewyork.us/resource/43nn-pn8j.json?$limit=5">data.cityofnewyork.us/resource/43nn-pn8j.json</a>
+    </div>
+    <div class="api-row">
+      <div class="top"><strong>Citi Bike live stations</strong><span class="pill ok">Works · no key</span></div>
+      <span>Bikes and docks available at every station, updated live.</span>
+      <a class="url" href="https://gbfs.citibikenyc.com/gbfs/gbfs.json">gbfs.citibikenyc.com/gbfs/gbfs.json</a>
+    </div>
+    <div class="api-row">
+      <div class="top"><strong>MTA subway &amp; bus real-time</strong><span class="pill key">Free key needed</span></div>
+      <span>Train arrivals and bus locations. Sign up before the event so your team isn't waiting.</span>
+      <a class="url" href="https://www.mta.info/developers">mta.info/developers</a>
+    </div>
+    <div class="api-row">
+      <div class="top"><strong>Browse everything else</strong><span class="pill ok">3,000+ datasets</span></div>
+      <span>Street trees, car crashes, evictions, Wi-Fi hotspots, film permits, housing violations. Search a topic, then click "API".</span>
+      <a class="url" href="https://opendata.cityofnewyork.us/">opendata.cityofnewyork.us</a>
+    </div>
+  </div>
+  <p>Handy trick: add filters to the web address. <code>?borough=BRONX&amp;complaint_type=HEAT/HOT WATER</code> on the 311 link shows only Bronx heat complaints.</p>
+</section>
+
+<section id="ideas">
+  <h2><span class="bullet" style="background:var(--r)">E</span>Top-3-level ideas</h2>
+  <p class="lede">The top 3 at Daytona didn't just <i>show</i> information. They <b>sensed</b> something in the real world, <b>decided</b> what it meant, <b>acted</b> on it, and <b>followed up</b> until the problem was solved.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Step</th><th>Lookup app</th><th>Top-3 app</th></tr></thead>
+    <tbody>
+      <tr><td><b>Input</b></td><td>You type a question</td><td>Your phone's motion, camera, mic, or a tap on a sticker</td></tr>
+      <tr><td><b>Brain</b></td><td>One AI answer</td><td>Several AI steps that check each other's work</td></tr>
+      <tr><td><b>Output</b></td><td>Information on a screen</td><td>An action taken: a report filed, a person matched, a call placed</td></tr>
+      <tr><td><b>After</b></td><td>Done</td><td>Follows up until someone confirms the problem is fixed (Relay's key idea)</td></tr>
+      <tr><td><b>Demo</b></td><td>Presenter clicks</td><td>Judges scan a QR code and take part themselves</td></tr>
+    </tbody>
+  </table></div>
+  <p>Each idea below is original, hits all five rows, uses NYC data, and has a paid tier for RevenueCat.</p>
+  <div class="card-list">
+    <div class="idea"><h3>Noise Pulse: the room becomes the data</h3><p>Everyone scans a QR code and their phone's mic becomes a noise meter, with nothing to install. Readings drop onto a live NYC map next to 311 noise complaints for that block. An AI agent spots patterns ("Thursday nights near this bar hit 85 dB, and 311 shows 40 complaints") and drafts one combined complaint for the block instead of 40 angry ones.</p><p class="money"><b>Demo moment:</b> "Everyone, scan this and make noise." The whole room makes noise and the map lights up in front of the judges. Same trick as Just Standup.<br><b>Pro:</b> a noise report for any address before you sign a lease. Good for apartment hunters and brokers.<br><b>Cut for tonight:</b> accounts and history. Just one live map plus the AI summary.</p><span class="tag">phone mic</span><span class="tag">311 noise</span><span class="tag">live map</span></div>
+    <div class="idea"><h3>Snap &amp; Solve: photo in, fix out</h3><p>Snap a photo of a street problem: a pothole, a dead streetlight, overflowing trash, a blocked bike lane. AI identifies it, picks the right city agency and 311 category, checks the 311 data for whether a neighbor already reported it nearby (no duplicates, like SIGNAL), and writes the report. Then it checks back later: still broken? It escalates with the whole history attached.</p><p class="money"><b>Demo moment:</b> a judge photographs a printed pothole picture on stage, and 10 seconds later sees "Already reported 3 times since Sept 2. Here's an escalation to your council member."<br><b>Pro:</b> building managers and business improvement districts track every issue on their blocks.<br><b>Cut for tonight:</b> real 311 submission. Show the finished report and the follow-up.</p><span class="tag">phone camera</span><span class="tag">Claude vision</span><span class="tag">311</span></div>
+    <div class="idea"><h3>Heat Line: one text organizes the whole building</h3><p>It's October, and heat season started Oct 1. A tenant texts "no heat" to one number. The agent checks the building's heat-complaint history, asks the neighbors who signed up whether they have heat too, builds a timeline with temperatures, and drafts the HPD complaint with the legal minimums (68°F by day when it's under 55°F outside). Every 12 hours it asks "Heat back yet?" and doesn't close the case until a tenant confirms.</p><p class="money"><b>Demo moment:</b> a judge texts the number from their own phone and gets the agent's reply live.<br><b>Pro:</b> tenant associations pay for building-wide tracking and evidence packets.<br><b>Cut for tonight:</b> real texting is a stretch goal. A web chat that looks like texting is fine.</p><span class="tag">SMS / chat agent</span><span class="tag">311 heat</span><span class="tag">follow-up loop</span></div>
+  </div>
+  <div class="callout"><p><b>Want bigger?</b> <a href="https://claude.ai/artifact/BNXQUqdYaWriAmZKZACZKR">Big Stack Ideas</a> has three Daytona-winner-scale builds (Ticket Court, Unclaimed, Signal Room) using your Daytona, Anchor, SurrealDB, Arize and ElevenLabs credits.</p></div>
+  <div class="callout"><p><b>Go deeper:</b> <a href="https://claude.ai/artifact/63DDVwdWpkMLns3kdEP7bv">NYC Idea Deep Dive</a> has real 311 numbers, a 3-minute demo script, who-does-what, copy-paste Claude Code prompts and the risks for each of these three ideas.</p></div>
+  <p><b>Easiest to finish tonight:</b> Snap &amp; Solve, which needs one photo, one AI call and one dataset. <b>Biggest wow:</b> Noise Pulse, because the whole room takes part. <b>Most "Relay-like":</b> Heat Line, with its follow-up loop and building-wide coordination.</p>
+  <h3>Simpler backups</h3>
+  <p>If the team is small or time runs out, these lookup apps are still solid.</p>
+  <div class="card-list">
+    <div class="idea"><h3>Block Report</h3><p>Type your address, see what your neighbors complain about most: rats, noise, heat. Great for apartment hunters.</p><p class="money"><b>Pro:</b> alerts when a building you're eyeing gets new complaints.</p><span class="tag">311</span><span class="tag">Housing violations</span></div>
+    <div class="idea"><h3>Heat Watch</h3><p>Winter is coming. Tenants see if their building has a history of no-heat complaints and get a one-tap guide to file one.</p><p class="money"><b>Pro:</b> tenant associations get a dashboard for their whole building.</p><span class="tag">311 heat/hot water</span></div>
+    <div class="idea"><h3>Grade Check</h3><p>Before you order delivery, see the restaurant's real health grade and its worst violations.</p><p class="money"><b>Pro:</b> watchlist for favorite spots, alerts when a grade drops.</p><span class="tag">Restaurant inspections</span></div>
+    <div class="idea"><h3>Dock Finder</h3><p>Citi Bike commuters see which nearby dock will actually have space when they arrive.</p><p class="money"><b>Pro:</b> morning push alert for your usual route.</p><span class="tag">Citi Bike live</span></div>
+    <div class="idea"><h3>Quiet Map</h3><p>Noise complaint heat map so remote workers and new parents can find calm blocks.</p><p class="money"><b>Pro:</b> compare neighborhoods by hour of the day.</p><span class="tag">311 noise</span></div>
+  </div>
+  <p><b>Rule of thumb:</b> pick the idea with <i>one dataset, one screen, one question answered</i>. You can always add more if time is left over (it won't be).</p>
+</section>
+
+<section id="role">
+  <h2><span class="bullet" style="background:var(--p)">F</span>Your role as the non-technical builder</h2>
+  <p>Mixed teams need someone who keeps the project focused and tells its story. Claim that out loud in the first 10 minutes: <span class="say">"I'll own the problem, the user, and the pitch, and I'll test everything as we go."</span></p>
+  <ul>
+    <li><b>Product lead:</b> write the one-sentence goal on paper and guard it from scope creep.</li>
+    <li><b>User voice:</b> you are a New Yorker. Your real stories about rats or no heat make the pitch land.</li>
+    <li><b>Prompter:</b> with Claude Code, describing what you want clearly <i>is</i> building. Write the feature requests in plain English.</li>
+    <li><b>Tester:</b> click everything, find what breaks, report it before the judges do.</li>
+    <li><b>Timekeeper:</b> call the "stop building" moment.</li>
+    <li><b>Pitch and slides:</b> start slides at the halfway mark while devs code.</li>
+  </ul>
+  <h3>A suggested timeline</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>When</th><th>What</th></tr></thead>
+    <tbody>
+      <tr><td class="t">6:30</td><td>Food, intros, teams formed. Say your role.</td></tr>
+      <tr><td class="t">+20 min</td><td>Pick ONE problem and ONE dataset. Write the goal sentence.</td></tr>
+      <tr><td class="t">+30 min</td><td>Devs pull the data and get anything on screen. You sketch the screen and draft the pitch.</td></tr>
+      <tr><td class="t">Halfway</td><td>Check: does the core thing work? If not, cut features now.</td></tr>
+      <tr><td class="t">−45 min</td><td>Feature freeze. Only fixes from here. Build slides.</td></tr>
+      <tr><td class="t">−20 min</td><td>Rehearse the pitch twice with the live demo. Screenshot a backup in case Wi-Fi dies.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="pitch">
+  <h2><span class="bullet" style="background:var(--a)">G</span>Pitch template (2–3 minutes)</h2>
+  <ol>
+    <li><b>Hook (15s):</b> a real moment. <span class="say">"Last winter my building had no heat for 6 days."</span></li>
+    <li><b>Problem (20s):</b> who suffers and how many. Pull one number from the data, e.g. how many heat complaints NYC got last year.</li>
+    <li><b>Solution (15s):</b> one sentence on what you built.</li>
+    <li><b>Live demo (60s):</b> one path, rehearsed. Don't wander.</li>
+    <li><b>Data (15s):</b> "Built on NYC Open Data 311, updated daily."</li>
+    <li><b>Business model (20s):</b> free tier vs. Pro tier, and the price. This is your RevenueCat moment.</li>
+    <li><b>Next steps (15s):</b> what you'd build with another week.</li>
+  </ol>
+  <div class="callout"><p>If the demo breaks, say "here's what it looked like 10 minutes ago" and show the backup screenshot. Judges have seen it a hundred times; calm recovery reads as confidence.</p></div>
+</section>
+
+<section id="check">
+  <h2><span class="bullet" style="background:var(--g)">H</span>Before you leave the house</h2>
+  <ul class="checks">
+    <li><input type="checkbox" id="c1"><label for="c1">Laptop charged + charger packed</label></li>
+    <li><input type="checkbox" id="c2"><label for="c2">Claude Code signed in and working on your laptop</label></li>
+    <li><input type="checkbox" id="c3"><label for="c3">GitHub account (username handy to share with team)</label></li>
+    <li><input type="checkbox" id="c4"><label for="c4">Free RevenueCat account created at revenuecat.com</label></li>
+    <li><input type="checkbox" id="c5"><label for="c5">Free MTA developer key, in case your team picks transit</label></li>
+    <li><input type="checkbox" id="c6"><label for="c6">Vercel account (signs in with GitHub) for putting the app online</label></li>
+    <li><input type="checkbox" id="c7"><label for="c7">Opened two of the data links above, so you've seen what the data looks like</label></li>
+    <li><input type="checkbox" id="c8"><label for="c8">Your two favorite ideas from section E, plus your own NYC frustration story</label></li>
+    <li><input type="checkbox" id="c9"><label for="c9">LinkedIn QR code ready on your phone for networking</label></li>
+  </ul>
+</section>
+
+<footer>Sources: RevenueCat site, docs and June 2026 launch recap; NYC Open Data portal; MTA developer page; Citi Bike GBFS. Data links tested live on Oct 19, 2026.</footer>
+</main>
+<script>
+document.querySelectorAll('.checks input').forEach(function(cb){
+  try{ if(localStorage.getItem(cb.id)==='1') cb.checked=true; }catch(e){}
+  cb.addEventListener('change',function(){ try{ localStorage.setItem(cb.id, cb.checked?'1':'0'); }catch(e){} });
+});
+</script>

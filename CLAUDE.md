@@ -19,9 +19,8 @@ I attended the **Daytona HackSprint w/ Arize, NYC, Oct 16 2026** (gallery: https
 - My friend Eric Liu won the AWS prize with Tenant Advocate. I don't want to copy anyone's app; I want top-3 level.
 - What the top 3 share: sense the real world, then several agents decide, act, and follow up until resolved; the audience joins the demo.
 
-## Ideas I'm choosing from (details in big-stack-ideas.html and idea-deep-dive.html)
-Ticket Court, Unclaimed, Signal Room, Mock Inspector, Violation Zero, Eviction Shield, After Hours Watch, Permit Pilot, Block Stories. Smaller: Noise Pulse, Snap & Solve, Heat Line.
-Each has a build ladder: get the core working by ~45 min, then add one sponsor tool at a time.
+## Our idea
+The team came up with a new idea on the night (none of the earlier prep ideas). Details to be added.
 
 ## Tools / credits I have (from the Daytona HackSprint)
 Daytona sandboxes, Anchor Browser (cloud browser, live view), SurrealDB Agent Memory, Arize AX tracing, ElevenLabs voice, AWS lab (likely expired). Coupon codes are in my email. Never put them in code, slides or this repo.

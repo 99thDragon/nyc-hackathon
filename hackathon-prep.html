@@ -89,7 +89,6 @@ footer{color:var(--muted);font-size:13px;padding-block:24px 40px}
   <a href="#rc"><span class="bullet" style="background:var(--o)">B</span>RevenueCat</a>
   <a href="#words"><span class="bullet" style="background:var(--g)">C</span>Jargon decoder</a>
   <a href="#data"><span class="bullet y" style="background:var(--y)">D</span>NYC data</a>
-  <a href="#ideas"><span class="bullet" style="background:var(--r)">E</span>Top-3 ideas</a>
   <a href="#role"><span class="bullet" style="background:var(--p)">F</span>Your role</a>
   <a href="#pitch"><span class="bullet" style="background:var(--a)">G</span>Pitch</a>
   <a href="#check"><span class="bullet" style="background:var(--g)">H</span>Checklist</a>
@@ -224,40 +223,6 @@ footer{color:var(--muted);font-size:13px;padding-block:24px 40px}
   <p>Handy trick: add filters to the web address. <code>?borough=BRONX&amp;complaint_type=HEAT/HOT WATER</code> on the 311 link shows only Bronx heat complaints.</p>
 </section>
 
-<section id="ideas">
-  <h2><span class="bullet" style="background:var(--r)">E</span>Top-3-level ideas</h2>
-  <p class="lede">The top 3 at Daytona didn't just <i>show</i> information. They <b>sensed</b> something in the real world, <b>decided</b> what it meant, <b>acted</b> on it, and <b>followed up</b> until the problem was solved.</p>
-  <div class="tbl"><table>
-    <thead><tr><th>Step</th><th>Lookup app</th><th>Top-3 app</th></tr></thead>
-    <tbody>
-      <tr><td><b>Input</b></td><td>You type a question</td><td>Your phone's motion, camera, mic, or a tap on a sticker</td></tr>
-      <tr><td><b>Brain</b></td><td>One AI answer</td><td>Several AI steps that check each other's work</td></tr>
-      <tr><td><b>Output</b></td><td>Information on a screen</td><td>An action taken: a report filed, a person matched, a call placed</td></tr>
-      <tr><td><b>After</b></td><td>Done</td><td>Follows up until someone confirms the problem is fixed (Relay's key idea)</td></tr>
-      <tr><td><b>Demo</b></td><td>Presenter clicks</td><td>Judges scan a QR code and take part themselves</td></tr>
-    </tbody>
-  </table></div>
-  <p>Each idea below is original, hits all five rows, uses NYC data, and has a paid tier for RevenueCat.</p>
-  <div class="card-list">
-    <div class="idea"><h3>Noise Pulse: the room becomes the data</h3><p>Everyone scans a QR code and their phone's mic becomes a noise meter, with nothing to install. Readings drop onto a live NYC map next to 311 noise complaints for that block. An AI agent spots patterns ("Thursday nights near this bar hit 85 dB, and 311 shows 40 complaints") and drafts one combined complaint for the block instead of 40 angry ones.</p><p class="money"><b>Demo moment:</b> "Everyone, scan this and make noise." The whole room makes noise and the map lights up in front of the judges. Same trick as Just Standup.<br><b>Pro:</b> a noise report for any address before you sign a lease. Good for apartment hunters and brokers.<br><b>Cut for tonight:</b> accounts and history. Just one live map plus the AI summary.</p><span class="tag">phone mic</span><span class="tag">311 noise</span><span class="tag">live map</span></div>
-    <div class="idea"><h3>Snap &amp; Solve: photo in, fix out</h3><p>Snap a photo of a street problem: a pothole, a dead streetlight, overflowing trash, a blocked bike lane. AI identifies it, picks the right city agency and 311 category, checks the 311 data for whether a neighbor already reported it nearby (no duplicates, like SIGNAL), and writes the report. Then it checks back later: still broken? It escalates with the whole history attached.</p><p class="money"><b>Demo moment:</b> a judge photographs a printed pothole picture on stage, and 10 seconds later sees "Already reported 3 times since Sept 2. Here's an escalation to your council member."<br><b>Pro:</b> building managers and business improvement districts track every issue on their blocks.<br><b>Cut for tonight:</b> real 311 submission. Show the finished report and the follow-up.</p><span class="tag">phone camera</span><span class="tag">Claude vision</span><span class="tag">311</span></div>
-    <div class="idea"><h3>Heat Line: one text organizes the whole building</h3><p>It's October, and heat season started Oct 1. A tenant texts "no heat" to one number. The agent checks the building's heat-complaint history, asks the neighbors who signed up whether they have heat too, builds a timeline with temperatures, and drafts the HPD complaint with the legal minimums (68°F by day when it's under 55°F outside). Every 12 hours it asks "Heat back yet?" and doesn't close the case until a tenant confirms.</p><p class="money"><b>Demo moment:</b> a judge texts the number from their own phone and gets the agent's reply live.<br><b>Pro:</b> tenant associations pay for building-wide tracking and evidence packets.<br><b>Cut for tonight:</b> real texting is a stretch goal. A web chat that looks like texting is fine.</p><span class="tag">SMS / chat agent</span><span class="tag">311 heat</span><span class="tag">follow-up loop</span></div>
-  </div>
-  <div class="callout"><p><b>Want bigger?</b> <a href="https://claude.ai/artifact/BNXQUqdYaWriAmZKZACZKR">Big Stack Ideas</a> has three Daytona-winner-scale builds (Ticket Court, Unclaimed, Signal Room) using your Daytona, Anchor, SurrealDB, Arize and ElevenLabs credits.</p></div>
-  <div class="callout"><p><b>Go deeper:</b> <a href="https://claude.ai/artifact/63DDVwdWpkMLns3kdEP7bv">NYC Idea Deep Dive</a> has real 311 numbers, a 3-minute demo script, who-does-what, copy-paste Claude Code prompts and the risks for each of these three ideas.</p></div>
-  <p><b>Easiest to finish tonight:</b> Snap &amp; Solve, which needs one photo, one AI call and one dataset. <b>Biggest wow:</b> Noise Pulse, because the whole room takes part. <b>Most "Relay-like":</b> Heat Line, with its follow-up loop and building-wide coordination.</p>
-  <h3>Simpler backups</h3>
-  <p>If the team is small or time runs out, these lookup apps are still solid.</p>
-  <div class="card-list">
-    <div class="idea"><h3>Block Report</h3><p>Type your address, see what your neighbors complain about most: rats, noise, heat. Great for apartment hunters.</p><p class="money"><b>Pro:</b> alerts when a building you're eyeing gets new complaints.</p><span class="tag">311</span><span class="tag">Housing violations</span></div>
-    <div class="idea"><h3>Heat Watch</h3><p>Winter is coming. Tenants see if their building has a history of no-heat complaints and get a one-tap guide to file one.</p><p class="money"><b>Pro:</b> tenant associations get a dashboard for their whole building.</p><span class="tag">311 heat/hot water</span></div>
-    <div class="idea"><h3>Grade Check</h3><p>Before you order delivery, see the restaurant's real health grade and its worst violations.</p><p class="money"><b>Pro:</b> watchlist for favorite spots, alerts when a grade drops.</p><span class="tag">Restaurant inspections</span></div>
-    <div class="idea"><h3>Dock Finder</h3><p>Citi Bike commuters see which nearby dock will actually have space when they arrive.</p><p class="money"><b>Pro:</b> morning push alert for your usual route.</p><span class="tag">Citi Bike live</span></div>
-    <div class="idea"><h3>Quiet Map</h3><p>Noise complaint heat map so remote workers and new parents can find calm blocks.</p><p class="money"><b>Pro:</b> compare neighborhoods by hour of the day.</p><span class="tag">311 noise</span></div>
-  </div>
-  <p><b>Rule of thumb:</b> pick the idea with <i>one dataset, one screen, one question answered</i>. You can always add more if time is left over (it won't be).</p>
-</section>
-
 <section id="role">
   <h2><span class="bullet" style="background:var(--p)">F</span>Your role as the non-technical builder</h2>
   <p>Mixed teams need someone who keeps the project focused and tells its story. Claim that out loud in the first 10 minutes: <span class="say">"I'll own the problem, the user, and the pitch, and I'll test everything as we go."</span></p>
@@ -307,7 +272,6 @@ footer{color:var(--muted);font-size:13px;padding-block:24px 40px}
     <li><input type="checkbox" id="c5"><label for="c5">Free MTA developer key, in case your team picks transit</label></li>
     <li><input type="checkbox" id="c6"><label for="c6">Vercel account (signs in with GitHub) for putting the app online</label></li>
     <li><input type="checkbox" id="c7"><label for="c7">Opened two of the data links above, so you've seen what the data looks like</label></li>
-    <li><input type="checkbox" id="c8"><label for="c8">Your two favorite ideas from section E, plus your own NYC frustration story</label></li>
     <li><input type="checkbox" id="c9"><label for="c9">LinkedIn QR code ready on your phone for networking</label></li>
   </ul>
 </section>

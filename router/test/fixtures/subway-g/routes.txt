@@ -1,0 +1,2 @@
+route_id,agency_id,route_short_name,route_long_name,route_type,route_color,route_text_color
+G,MTA NYCT,G,Brooklyn-Queens Crosstown,1,799534,FFFFFF

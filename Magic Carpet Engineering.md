@@ -27,7 +27,7 @@ Live checks on 2026-10-19 found these differences.
 | --- | --- | --- |
 | Elevator availability history is systemwide only (`rc78-7x78`) | `rc78-7x78` is monthly per unit: `equipment_code`, outages, entrapments, AM peak, PM peak and 24 h availability. 694 units in Aug 2026 | Per-unit monthly reliability exists from day one. The poller adds event history: each outage start, end and hour |
 | Elevator feeds need a free api.mta.info account | `nyct_ene.json` returns HTTP 200 with no key | No signup |
-| 126 of 472 stations accessible (27%) | 164 of 472 (35%) on 2026-10-16 ([RT&S](https://www.rtands.com/passenger/mta-reaches-164-accessible-stations-breaks-ground-on-bryant-park-project/)) | Update the number |
+| 126 of 472 stations accessible (27%) | **166 of 496 (33%)** from live `39hk-dx4f` on 2026-10-19 — 322 not accessible, 8 partial. The 472 denominator matches no count in that dataset (496 rows, 493 station IDs, 445 complexes), so do not pair it with a news numerator such as [164](https://www.rtands.com/passenger/mta-reaches-164-accessible-stations-breaks-ground-on-bryant-park-project/) | Use **166 of 496** everywhere, money slide included |
 | Terms: warn if realtime lag exceeds 1 min | Our first draft used 2 min | Stale threshold is 60 s |
 
 ## 3. Decision model

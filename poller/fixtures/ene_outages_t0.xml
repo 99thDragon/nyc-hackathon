@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<nyct_ene>
+  <outage>
+    <station>149 St-Hostos</station>
+    <borough>Bronx</borough>
+    <trainno>2,4,5</trainno>
+    <equipment>EL101</equipment>
+    <equipmenttype>EL</equipmenttype>
+    <serving>Mezzanine to Downtown Platform</serving>
+    <ADA>Y</ADA>
+    <outagedate>10/18/2026 06:12:00 AM</outagedate>
+    <estimatedreturntoservice>10/19/2026 05:00:00 PM</estimatedreturntoservice>
+    <reason>Repair</reason>
+    <isupcomingoutage>N</isupcomingoutage>
+    <ismaintenanceoutage>N</ismaintenanceoutage>
+  </outage>
+  <outage>
+    <station>191 St</station>
+    <borough>Manhattan</borough>
+    <trainno>1</trainno>
+    <equipment>EL103</equipment>
+    <equipmenttype>EL</equipmenttype>
+    <serving>Street to Mezzanine</serving>
+    <ADA>N</ADA>
+    <outagedate>10/19/2026 09:40:00 AM</outagedate>
+    <estimatedreturntoservice>10/19/2026 02:00:00 PM</estimatedreturntoservice>
+    <reason>Water Condition</reason>
+    <isupcomingoutage>N</isupcomingoutage>
+    <ismaintenanceoutage>N</ismaintenanceoutage>
+  </outage>
+  <outage>
+    <station>Grand Central-42 St</station>
+    <borough>Manhattan</borough>
+    <trainno>4,5,6,7,S</trainno>
+    <equipment>EL607X</equipment>
+    <equipmenttype>EL</equipmenttype>
+    <serving>Mezzanine to Shuttle Platform</serving>
+    <ADA>Y</ADA>
+    <outagedate>10/26/2026 01:00:00 AM</outagedate>
+    <estimatedreturntoservice>10/26/2026 11:00:00 PM</estimatedreturntoservice>
+    <reason>Scheduled Maintenance</reason>
+    <isupcomingoutage>Y</isupcomingoutage>
+    <ismaintenanceoutage>Y</ismaintenanceoutage>
+  </outage>
+</nyct_ene>

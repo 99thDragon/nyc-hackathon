@@ -12,6 +12,8 @@ A 3D map of every NYC subway station that answers one question: **can I get to t
 - **Red pillar (tall):** an accessibility elevator is out right now
 - **Gray pillar (short):** stairs only
 
+Subway lines are drawn in their real colors, with **live trains** as moving dots. The MTA publishes predicted arrival times, not GPS, so each train is placed along its track between stops by time and refreshed every 30s. Track shapes: `data/lines.json`, rebuilt from MTA static GTFS with `python tools/build_lines.py`.
+
 Pick a station (search box or click a pillar) to get a YES / NOT RIGHT NOW / NO verdict, the outage details, and the nearest working step-free station.
 
 **How safe is this trip?** Enter a start and end station. It checks facts, not feelings: is each end step-free right now, are escalators out, and how many minutes until the next direct train (live). Verdict: GOOD TO GO / HEADS UP / NOT STEP-FREE. No "feels safe" rating, on purpose (see the proposal's safety-rating section).

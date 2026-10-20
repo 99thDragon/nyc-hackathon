@@ -1,1 +1,12 @@
 .vercel
+
+# Runtime data and secrets. The accumulated poller history lives in
+# poller/data/ and is excluded by poller/.gitignore; these are belt-and-braces
+# so a sqlite file or a key cannot be committed from anywhere in the repo.
+*.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
+.env
+
+# Rewritten by the poller every 5 minutes; generated, not source.
+data/outages.json

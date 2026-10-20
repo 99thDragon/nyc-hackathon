@@ -18,7 +18,7 @@ The questions repeat all day across the system:
 
 Every one has an answer. None is answered by what riders are handed today. The MTA publishes elevator outages as equipment IDs with outage reasons, schedules as GTFS feeds, and disruptions as prose alerts. All accurate, none of it a judgment. The rider still does the interpretation.
 
-That interpretive work falls hardest on riders with the least slack — a parent with a stroller, someone using a wheelchair or walker, a rider with luggage, anyone for whom a broken elevator is not an inconvenience but a dead end. 126 of 472 subway stations are fully accessible, or 27%, and the settlement that commits the MTA to 95% runs to [2055](https://www.amny.com/transit/mta-settles-lawsuits-agrees-to-make-95-of-subway-stations-accessible-by-2055). For the next thirty years, routing around the gaps is the rider's problem.
+That interpretive work falls hardest on riders with the least slack — a parent with a stroller, someone using a wheelchair or walker, a rider with luggage, anyone for whom a broken elevator is not an inconvenience but a dead end. 166 of 496 subway stations are fully accessible, or 33%, with 8 more partially accessible, and the settlement that commits the MTA to 95% runs to [2055](https://www.amny.com/transit/mta-settles-lawsuits-agrees-to-make-95-of-subway-stations-accessible-by-2055). For the next thirty years, routing around the gaps is the rider's problem.
 
 The MTA knows the system has a condition problem in the aggregate: its own Spring 2026 survey of 92,000 subway riders put satisfaction with station cleanliness at [60%](https://www.mta.info/article/mta-customers-count-spring-2026-survey-results). What it does not publish is which stations. A rider cannot act on 60%.
 
@@ -36,7 +36,7 @@ The MTA knows the system has a condition problem in the aggregate: its own Sprin
 
 Three things nobody currently gives a rider:
 
-1. **Reliability, not status.** MTA publishes availability history only as a systemwide monthly percentage ([dataset rc78-7x78](https://catalog.data.gov/dataset/mta-nyct-subway-elevator-and-escalator-availability-beginning-2015)). Per-unit history does not exist publicly. So no one can tell you that a particular elevator is down a third of the time — which is exactly what decides whether you route through that station.
+1. **Event history, not monthly averages.** Per-unit history does exist, and an earlier draft of this document was wrong to say otherwise: [`rc78-7x78`](https://data.ny.gov/d/rc78-7x78) publishes outages, entrapments and peak availability per `equipment_code` every month back to Jan 2015 — 416 elevators in its latest month, Aug 2026. What nobody publishes is the **event record underneath**: when each outage began and ended, how long it ran, which hours of the day it hit, and anything fresher than a monthly release running about seven weeks behind. So the agency can tell you an elevator averaged 93% last August. It cannot tell you that this elevator fails most weekday evenings — which is what actually decides whether you route through that station.
 2. **Condition, per station.** Cleanliness, smell, noise, bathroom reality. The MTA's own Passenger Environment Survey, which measured station conditions, stopped being published after 2019.
 3. **Where to stand.** Car and door guidance exists only in one static paid app, built by hand over fifteen years, and covers exits rather than elevators or accessibility.
 
@@ -52,7 +52,7 @@ Three consequences for the design:
 
 - **Every answer is a verdict, not a reading.** Not "elevator ES241: ACTIVE OUTAGE, reason: maintenance" but **No — no step-free route to the uptown platform right now. Nearest step-free alternative: 14 St–6 Av, 4 min walk.**
 - **Opinions must be defensible.** A verdict carries its evidence on tap: what it was computed from, how many reports, how recent, how confident. A rating nobody can interrogate is a rumor.
-- **The reliability history is the moat.** Nobody publishes per-elevator history, but the live outage feed can be polled and accumulated. Six months of polling produces a dataset that cannot be bought, bought back, or scraped from anyone else — and it compounds, which is the only kind of advantage worth building on in a space where the incumbent has the official data.
+- **The reliability history is the moat.** Per-elevator *monthly* availability is published, so the starting point is better than it looks and a reliability score can ship on day one. What nobody publishes is the event record — outage starts, durations, time-of-day patterns — and the live outage feed can be polled and accumulated into exactly that. Six months of polling produces a dataset that cannot be bought, bought back, or scraped from anyone else — and it compounds, which is the only kind of advantage worth building on in a space where the incumbent has the official data.
 
 ## The rating system
 
@@ -70,9 +70,9 @@ Provenance vocabulary used below: **Official** = straight from an MTA feed or da
 | Step-free on a good day? | Does a step-free path exist at all when nothing is broken? | Official: station ADA field (0/1/2) |
 | Can I switch direction without paying again? | Is there a crossover or crossunder inside fare control? | Survey + Crowd |
 | Free transfer to my next line? | Is the transfer in-system, or out-and-back-in? | Official: GTFS transfers |
-| Working bathroom? | Open, and functioning, within the last week | Crowd |
+| Working bathroom? | Open, and functioning, within the last week | Official: `6yjv-fk7g` (a restroom exists here) + Crowd (open and working) |
 | Agent in the booth? | Is there a human to ask or to open the gate? | Crowd |
-| Tap reader at the wide gate? | Can a wheelchair user actually pay at the accessible gate? | Survey |
+| Tap reader at the wide gate? | Can a wheelchair user actually pay at the accessible gate? | Official: `6yjv-fk7g` (accessible fare-gate entrance present) + Survey (whether the reader is reachable from it) |
 | Floods in hard rain? | Known water-intrusion station | Crowd + news archive |
 | Platform gap worth minding? | Dangerous step or gap at this platform | Survey + Crowd |
 
@@ -119,12 +119,14 @@ So the data model has to be built and seeded by hand:
 | --- | --- | --- |
 | Station + direction + line | 59 St–Columbus Circle, downtown, A | Official (GTFS stop IDs) |
 | Train length in cars | 10 | Official (rolling stock by line) |
-| Elevator car position | car 3 of 10 | Field survey, then rider confirmation |
+| Elevator car position | car 3 of 10 | Seeded from elevator lat/lon in `6yjv-fk7g`, then field survey and rider confirmation |
 | Exit car positions | car 1 → NW corner; car 10 → SE corner | Field survey + crowd |
 | Transfer car position | car 8 → 1 train passageway | Field survey + crowd |
 | Cars to avoid | car 1 at rush | Crowd only |
 
-Two constraints make this tractable rather than hopeless. First, car position only needs to be recorded once per station-direction — platforms do not move. Second, it does not need full coverage to be useful: the elevator-car position for the 126 accessible stations is a finite, high-value target that no one has published, and it is a far smaller job than mapping every exit in the system.
+Two constraints make this tractable rather than hopeless. First, car position only needs to be recorded once per station-direction — platforms do not move. Second, it does not need full coverage to be useful: the elevator-car position for the 166 accessible stations is a finite, high-value target that no one has published, and it is a far smaller job than mapping every exit in the system.
+
+There is also a cheaper partial path worth taking before any survey. The amenities dataset carries **446 elevator records with individual lat/lon**. That is not car position, but it locates each elevator along its platform — which answers most of question 3 above, *which car for the elevator*, without sending anyone into the field. Survey is then left with the narrow job of mapping that position to a car number, rather than discovering the position in the first place.
 
 The honest scoping consequence: **car guidance ships for accessible stations first, one corridor at a time, and the site says plainly where it has no data.** Pretending to full coverage with guessed positions would destroy the product's credibility faster than any other mistake available to it.
 
@@ -139,16 +141,17 @@ About half the proposed fields can be filled from official sources on day one; t
 | [Elevator & Escalator Equipment feed](https://www.mta.info/developers/display-elevators-NYCT) | Every unit: ID, station, location in station, lines served, whether it is part of an ADA path, alternate route when down | Free account at api.mta.info |
 | Elevator & Escalator Current Outages feed | Which units are down, why, estimated return; joins to equipment by ID | Same account |
 | [MTA Subway Stations dataset](https://catalog.data.gov/dataset/mta-subway-stations) | All stations with GTFS stop IDs and ADA status (0 = not accessible, 1 = full, 2 = partial, plus direction notes) | data.ny.gov, open |
+| [Subway Station Amenities](https://data.ny.gov/d/6yjv-fk7g) | Monthly snapshots, per station: restrooms, elevators, help points, accessible fare-gate entrances. **Existence, not working status** | data.ny.gov, open |
 | [Subway GTFS static + GTFS-RT](https://www.mta.info/developers) | Stops, routes, transfers, headways, live arrivals | Open; realtime via api.mta.info |
-| [Elevator/escalator availability, 2015–](https://catalog.data.gov/dataset/mta-nyct-subway-elevator-and-escalator-availability-beginning-2015) | Monthly availability — **systemwide only** | data.ny.gov, open |
+| [Elevator/escalator availability, 2015–](https://catalog.data.gov/dataset/mta-nyct-subway-elevator-and-escalator-availability-beginning-2015) | Monthly availability **per unit** (`equipment_code`): outages, entrapments, AM/PM peak and 24 h availability, Jan 2015 → Aug 2026 | data.ny.gov, open |
 | [MTA Pulse Survey, 2025–](https://catalog.data.gov/dataset/mta-pulse-survey-beginning-2025) | Satisfaction scores by mode and question | data.ny.gov, open |
 
 ### Not available — must be built
 
-- **Per-unit outage history.** The only published history is systemwide. This is the gap the product fills, by polling the outages feed on a schedule and recording every state change. Cheap to run, impossible to backfill — which is the argument for starting the poller before anything else.
+- **Event-level outage history.** Per-unit *monthly* availability is published (`rc78-7x78`, back to 2015), so reliability scores have a real baseline from day one. What is missing is the record underneath: each outage's start, end, duration and hour, and anything fresher than a monthly release about seven weeks behind. That is the gap the product fills, by polling the outages feed on a schedule and recording every state change. Cheap to run, impossible to backfill — which is the argument for starting the poller before anything else.
 - **Car and door positions.** No feed. Field survey plus crowd confirmation.
 - **Station condition.** The Passenger Environment Survey stopped after 2019. Crowd plus our own audits.
-- **Bathrooms, booth staffing, gate reader placement.** Not published in usable form. Crowd and survey.
+- **Whether a bathroom is open and working; booth staffing; gate-reader placement.** Note what changed here: `6yjv-fk7g` now publishes that a restroom, help point or accessible fare-gate entrance **exists**, which removes months of field survey from the plan. What it does not publish is whether any of them is open, working, staffed, or reachable from the wide gate. That half stays crowd and survey.
 
 ### License terms worth knowing before building
 
@@ -168,7 +171,7 @@ That last pair is the material business risk: **the core feed can be withdrawn a
 
 A rating site dies of three causes — sparse data shown as confident, stale data shown as current, and gamed data shown as consensus. Each needs a mechanism, not good intentions.
 
-**Sparse coverage.** With 472 stations and few early users, most stations will have zero or two reports. The temptation is to show an average anyway; two reports averaged to "2.5/5" reads identically to two hundred.
+**Sparse coverage.** With 496 stations and few early users, most stations will have zero or two reports. The temptation is to show an average anyway; two reports averaged to "2.5/5" reads identically to two hundred.
 
 - Below a minimum sample, show **"not rated yet"** rather than a number. No exceptions, including for stations we care about.
 - Display a confidence indicator beside every 1–5 value, driven by sample size and recency.
@@ -208,7 +211,7 @@ A subway rating site inherits that exposure in full, with an additional twist �
 | --- | --- | --- |
 | "Feels safe: 2/5" | Lighting: 1–5 | Observable, photographable, comparable between stations |
 | "Sketchy at night" | Sightlines — can you see the length of the platform? | A physical property of the station |
-| "Dangerous" | Is the platform staffed or is there a working help point? | A yes/no fact |
+| "Dangerous" | Is the platform staffed or is there a working help point? | A yes/no fact — help-point presence is official in `6yjv-fk7g` |
 | "Avoid after dark" | How long is the wait at this hour? | From GTFS, no judgment needed |
 
 3. **Never aggregate to a neighborhood or line verdict.** Ratings attach to stations and to specific conditions. A "worst stations" leaderboard is a headline generator and should not exist.
@@ -218,7 +221,19 @@ There is a real cost here: riders do want to know about safety, and "we don't do
 
 ## Scope and phasing
 
-&#91;embedded content: build phases · 4 phases, 3 gates\]
+```mermaid
+flowchart LR
+    P1["Phase 1 · Official data only<br/>Live step-free verdicts, accessible-station map,<br/>alternate route when an elevator is down<br/>Zero contributors required"]
+    G1{{"Gate 1<br/>WCAG 2.2 AA, screen-reader tested<br/>Demographic correlation audit clean"}}
+    P2["Phase 2 · Crowd ratings<br/>Structured prompts at the moment of truth<br/>Confidence indicators, half-life decay"]
+    G2{{"Gate 2<br/>Corridor ratings have survived<br/>contact with actual riders"}}
+    P3["Phase 3 · Car guidance<br/>Corridor-first, accessible stations first<br/>Elevator-car position, seeded then surveyed"]
+    G3{{"Gate 3<br/>Coverage stated honestly where it is thin<br/>No guessed positions"}}
+    P4["Phase 4 · Expansion<br/>Further corridors; reliability history compounds"]
+    P1 --> G1 --> P2 --> G2 --> P3 --> G3 --> P4
+    classDef gate fill:#fff4e5,stroke:#d97706,stroke-width:1px;
+    class G1,G2,G3 gate;
+```
 
 Phase 1 is the one worth dwelling on: a site built only on the official feeds — live step-free verdicts, accessible-station map, alternate routes when an elevator is down — is already more useful than what riders have, and it needs no contributors at all. That removes the cold-start dependency entirely. Crowd ratings and car guidance then arrive as upside on a product that already works, instead of being the thing a launch is gambling on.
 
@@ -226,7 +241,36 @@ Each gate is a real stop, not a checkpoint to wave through. Phase 1 does not shi
 
 ## Architecture
 
-&#91;embedded content: architecture · sources, system, rider surface\]
+```mermaid
+flowchart LR
+    subgraph SRC["Sources"]
+        S1["Elevator/escalator<br/>current outages feed"]
+        S2["Equipment inventory<br/>94fv-bak7"]
+        S3["Stations + ADA status<br/>39hk-dx4f"]
+        S4["Station amenities<br/>6yjv-fk7g"]
+        S5["GTFS static + GTFS-RT"]
+    end
+    subgraph SYS["System"]
+        POLL["Outage poller<br/>runs on a schedule"]
+        LOG["Append-only outage log<br/>immutable state changes"]
+        SCORE["Verdict + scoring engine<br/>recomputed from the log"]
+        CROWD["Rider reports<br/>structured prompts, weighted"]
+    end
+    subgraph RIDER["Rider surface"]
+        PAGE["Station page<br/>verdict first, evidence on tap"]
+        ALT["Alternate step-free route"]
+    end
+    S1 --> POLL --> LOG --> SCORE
+    S2 --> SCORE
+    S3 --> SCORE
+    S4 --> SCORE
+    S5 --> SCORE
+    CROWD --> SCORE
+    SCORE --> PAGE
+    SCORE --> ALT
+    classDef moat fill:#fdf0e3,stroke:#c2410c,stroke-width:2px;
+    class POLL,LOG moat;
+```
 
 The two accented boxes are the whole technical argument. Everything else here is ordinary web engineering that any competent team can do in a quarter; the poller and the append-only history are what make the product hard to copy a year from now.
 
@@ -258,4 +302,4 @@ The two accented boxes are the whole technical argument. Everything else here is
 
 ### What to do first, regardless of those answers
 
-**Start the outage poller this week.** It is perhaps a day of work, it costs almost nothing to run, and every day it is not running is a day of per-elevator reliability history that cannot be recovered later. That dataset is the product's only durable advantage, and it is the one thing here that gets strictly more valuable while the open questions are being argued about.
+**Start the outage poller this week.** It is perhaps a day of work, it costs almost nothing to run, and every day it is not running is a day of per-outage event history that cannot be recovered later. The monthly per-unit averages will still be there; the event record will not. That dataset is the product's only durable advantage, and it is the one thing here that gets strictly more valuable while the open questions are being argued about.

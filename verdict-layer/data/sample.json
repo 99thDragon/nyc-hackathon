@@ -1,0 +1,82 @@
+{
+  "_note": "ILLUSTRATIVE SAMPLE DATA for the hackathon demo. Station/elevator IDs and every number below are made up, not real MTA data. Replace with the live MTA feeds (equipment + outages) and the outage-history poller.",
+  "stations": {
+    "S59": {
+      "name": "59 St-Columbus Circle",
+      "lines": ["A", "C", "B", "D", "1"],
+      "ada": 1,
+      "directions": {
+        "uptown": {
+          "trainCars": 10,
+          "requiresElevators": ["EL-S59-1", "EL-S59-2"],
+          "elevatorCar": 3
+        },
+        "downtown": {
+          "trainCars": 10,
+          "requiresElevators": ["EL-S59-1", "EL-S59-3"],
+          "elevatorCar": 8
+        }
+      },
+      "nearby": [{ "stationId": "S50", "walkMinutes": 4 }]
+    },
+    "S50": {
+      "name": "50 St",
+      "lines": ["C", "E"],
+      "ada": 1,
+      "directions": {
+        "uptown": { "trainCars": 10, "requiresElevators": ["EL-S50-1"], "elevatorCar": 5 },
+        "downtown": { "trainCars": 10, "requiresElevators": ["EL-S50-1"], "elevatorCar": 5 }
+      },
+      "nearby": [{ "stationId": "S59", "walkMinutes": 4 }]
+    },
+    "S14": {
+      "name": "14 St",
+      "lines": ["A", "C", "E", "L"],
+      "ada": 1,
+      "directions": {
+        "uptown": { "trainCars": 10, "requiresElevators": ["EL-S14-1", "EL-S14-2"], "elevatorCar": 2 },
+        "downtown": { "trainCars": 10, "requiresElevators": ["EL-S14-1"], "elevatorCar": 9 }
+      },
+      "nearby": []
+    },
+    "S99": {
+      "name": "Sample Walk-Up Station",
+      "lines": ["R"],
+      "ada": 0,
+      "directions": {
+        "uptown": { "trainCars": 8, "requiresElevators": [], "elevatorCar": null },
+        "downtown": { "trainCars": 8, "requiresElevators": [], "elevatorCar": null }
+      },
+      "nearby": []
+    }
+  },
+  "elevators": {
+    "EL-S59-1": { "stationId": "S59", "desc": "Street to mezzanine" },
+    "EL-S59-2": { "stationId": "S59", "desc": "Mezzanine to uptown platform" },
+    "EL-S59-3": { "stationId": "S59", "desc": "Mezzanine to downtown platform" },
+    "EL-S50-1": { "stationId": "S50", "desc": "Street to platform" },
+    "EL-S14-1": { "stationId": "S14", "desc": "Street to mezzanine" },
+    "EL-S14-2": { "stationId": "S14", "desc": "Mezzanine to uptown platform" }
+  },
+  "outages": [
+    { "elevatorId": "EL-S59-2", "reason": "Maintenance", "estReturn": "tomorrow 6:00 PM" }
+  ],
+  "outageDaysLast90": {
+    "EL-S59-1": 4,
+    "EL-S59-2": 31,
+    "EL-S59-3": 9,
+    "EL-S50-1": 2,
+    "EL-S14-1": 12,
+    "EL-S14-2": 6
+  },
+  "carReports": [
+    { "stationId": "S59", "direction": "uptown", "car": 3, "smell": 4, "cleanliness": 4, "acWorking": true, "crowding": 3, "daysAgo": 1 },
+    { "stationId": "S59", "direction": "uptown", "car": 3, "smell": 5, "cleanliness": 4, "acWorking": true, "crowding": 3, "daysAgo": 2 },
+    { "stationId": "S59", "direction": "uptown", "car": 3, "smell": 4, "cleanliness": 5, "acWorking": true, "crowding": 2, "daysAgo": 4 },
+    { "stationId": "S59", "direction": "uptown", "car": 7, "smell": 2, "cleanliness": 2, "acWorking": false, "crowding": 4, "daysAgo": 1 },
+    { "stationId": "S59", "direction": "uptown", "car": 7, "smell": 1, "cleanliness": 2, "acWorking": false, "crowding": 4, "daysAgo": 3 },
+    { "stationId": "S59", "direction": "uptown", "car": 7, "smell": 2, "cleanliness": 3, "acWorking": false, "crowding": 5, "daysAgo": 5 },
+    { "stationId": "S59", "direction": "uptown", "car": 5, "smell": 3, "cleanliness": 3, "acWorking": true, "crowding": 3, "daysAgo": 2 },
+    { "stationId": "S59", "direction": "downtown", "car": 8, "smell": 4, "cleanliness": 4, "acWorking": true, "crowding": 2, "daysAgo": 1 }
+  ]
+}

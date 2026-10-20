@@ -21,7 +21,9 @@ const map = new maplibregl.Map({
   zoom: 11.3,
   pitch: 55,
   bearing: -29,
-  antialias: true,
+  // Performance: no MSAA, and cap pixel density so retina screens don't draw 3x the pixels.
+  antialias: false,
+  pixelRatio: Math.min(window.devicePixelRatio || 1, 1.5),
 });
 map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
 
@@ -82,7 +84,10 @@ async function getJSON(url) {
 }
 
 async function loadAll() {
-  const [stations, eq, outages] = await Promise.all([getJSON(STATIONS_URL), getJSON(EQUIPMENT_URL), getJSON(OUTAGES_URL)]);
+  const [stations, eq, outages, lines] = await Promise.all([
+    getJSON(STATIONS_URL), getJSON(EQUIPMENT_URL), getJSON(OUTAGES_URL), getJSON("data/lines.json"),
+  ]);
+  prepareLines(lines);
   complexes = groupStations(stations);
   equipment = new Map(eq.map((e) => [e.equipmentno, e]));
   applyOutages(outages);
@@ -100,7 +105,7 @@ async function refreshOutages() {
 // ---------- map ----------
 
 // A small circle polygon so each station can be extruded into a 3D pillar.
-function pillar(lng, lat, meters = 55, steps = 16) {
+function pillar(lng, lat, meters = 55, steps = 10) {
   const dLat = meters / 111_320;
   const dLng = meters / (111_320 * Math.cos((lat * Math.PI) / 180));
   const ring = [];
@@ -137,15 +142,16 @@ function setupLayers() {
       type: "fill-extrusion",
       source: "openmaptiles",
       "source-layer": "building",
-      minzoom: 13,
+      minzoom: 14, // only when zoomed in: thousands of extrusions are the main GPU cost
       paint: {
         "fill-extrusion-color": "#23262c",
         "fill-extrusion-height": ["coalesce", ["get", "render_height"], 10],
         "fill-extrusion-base": ["coalesce", ["get", "render_min_height"], 0],
-        "fill-extrusion-opacity": 0.75,
+        "fill-extrusion-opacity": 1, // opaque extrusions render much faster than see-through ones
       },
     });
   }
+  addLineLayers();
   map.addSource("stations", { type: "geojson", data: toGeoJSON() });
   map.addLayer({
     id: "station-pillars",
@@ -154,7 +160,7 @@ function setupLayers() {
     paint: {
       "fill-extrusion-color": ["get", "color"],
       "fill-extrusion-height": ["get", "height"],
-      "fill-extrusion-opacity": 0.92,
+      "fill-extrusion-opacity": 1,
     },
   });
 
@@ -296,7 +302,7 @@ const RT_PROTO = `syntax = "proto2";
 message FeedMessage { repeated FeedEntity entity = 2; }
 message FeedEntity { required string id = 1; optional TripUpdate trip_update = 3; }
 message TripUpdate { required TripDescriptor trip = 1; repeated StopTimeUpdate stop_time_update = 2; }
-message TripDescriptor { optional string route_id = 5; }
+message TripDescriptor { optional string trip_id = 1; optional string route_id = 5; }
 message StopTimeUpdate { optional StopTimeEvent arrival = 2; optional StopTimeEvent departure = 3; optional string stop_id = 4; }
 message StopTimeEvent { optional int64 time = 2; }`;
 let FeedMessage = null;
@@ -390,6 +396,169 @@ function setupTripForm() {
   });
 }
 
+// ---------- subway lines and live trains ----------
+// Track shapes come from static GTFS (data/lines.json, built by tools/build_lines.py).
+// The MTA doesn't publish train GPS, only predicted arrival times per stop, so each train is
+// placed along its track shape between stops by time, then slid smoothly between refreshes.
+
+const ALL_FEEDS = ["gtfs", "gtfs-ace", "gtfs-bdfm", "gtfs-g", "gtfs-jz", "gtfs-nqrw", "gtfs-l", "gtfs-si"];
+const TRAIN_REFRESH_MS = 30_000;
+const TRAIN_FRAME_MS = 150;
+const M_PER_DEG = 111_320;
+const COS_LAT = Math.cos((40.73 * Math.PI) / 180);
+let shapes = {}; // shape_id -> { route, color, coords, xy, cum }
+let shapesByRoute = {}; // route -> [shape_id]
+let stopXY = {}; // parent stop_id -> [x, y] in meters
+let trains = [];
+
+const toXY = ([lng, lat]) => [lng * COS_LAT * M_PER_DEG, lat * M_PER_DEG];
+const toLngLat = ([x, y]) => [x / (COS_LAT * M_PER_DEG), y / M_PER_DEG];
+
+function prepareLines(data) {
+  shapes = data.shapes;
+  shapesByRoute = {};
+  for (const [id, s] of Object.entries(shapes)) {
+    s.xy = s.coords.map(toXY);
+    s.cum = [0];
+    for (let i = 1; i < s.xy.length; i++) s.cum.push(s.cum[i - 1] + Math.hypot(s.xy[i][0] - s.xy[i - 1][0], s.xy[i][1] - s.xy[i - 1][1]));
+    (shapesByRoute[s.route] ||= []).push(id);
+  }
+  stopXY = Object.fromEntries(Object.entries(data.stops).map(([id, ll]) => [id, toXY(ll)]));
+}
+
+// Distance along a shape of the point closest to p, and how far p is from the track.
+function project(s, p) {
+  let best = { along: 0, off: Infinity };
+  for (let i = 1; i < s.xy.length; i++) {
+    const [ax, ay] = s.xy[i - 1], [bx, by] = s.xy[i];
+    const dx = bx - ax, dy = by - ay, len2 = dx * dx + dy * dy || 1;
+    const t = Math.max(0, Math.min(1, ((p[0] - ax) * dx + (p[1] - ay) * dy) / len2));
+    const off = Math.hypot(ax + t * dx - p[0], ay + t * dy - p[1]);
+    if (off < best.off) best = { along: s.cum[i - 1] + t * (s.cum[i] - s.cum[i - 1]), off };
+  }
+  return best;
+}
+
+function pointAlong(s, d) {
+  const cum = s.cum;
+  d = Math.max(0, Math.min(cum[cum.length - 1], d));
+  let lo = 1, hi = cum.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if (cum[mid] < d) lo = mid + 1;
+    else hi = mid;
+  }
+  const t = (d - cum[lo - 1]) / (cum[lo] - cum[lo - 1] || 1);
+  const [ax, ay] = s.xy[lo - 1], [bx, by] = s.xy[lo];
+  return toLngLat([ax + t * (bx - ax), ay + t * (by - ay)]);
+}
+
+// Turn one GTFS-realtime trip into a train we can animate, or null if we can't place it.
+function placeTrip(tu, now) {
+  const route = tu.trip.routeId;
+  const upcoming = (tu.stopTimeUpdate || [])
+    .map((u) => ({ id: (u.stopId || "").replace(/[NS]$/, ""), t: u.arrival?.time || u.departure?.time }))
+    .filter((u) => u.t && stopXY[u.id] && u.t > now - 60);
+  // Skip trips that haven't left their terminal yet; they'd just pile up at the line ends.
+  if (!upcoming.length || upcoming[0].t - now > 600) return null;
+  const [s1, s2 = { ...s1, t: s1.t + 120 }] = upcoming;
+
+  const named = (tu.trip.tripId || "").split("_").pop();
+  const candidates = shapes[named] ? [named] : shapesByRoute[route] || [];
+  let best = null;
+  for (const id of candidates) {
+    const s = shapes[id];
+    const p1 = project(s, stopXY[s1.id]), p2 = project(s, stopXY[s2.id]);
+    const off = p1.off + p2.off;
+    if (!best || off < best.off) best = { s, d1: p1.along, d2: p2.along, off };
+  }
+  if (!best || best.off > 400) return null;
+  return { route, color: best.s.color, shape: best.s, d1: best.d1, d2: best.d2, t1: s1.t, t2: Math.max(s2.t, s1.t + 30) };
+}
+
+async function refreshTrains() {
+  const now = Date.now() / 1000;
+  const msgs = await Promise.allSettled(ALL_FEEDS.map(getFeed));
+  const next = [];
+  for (const m of msgs) {
+    if (m.status !== "fulfilled") continue;
+    for (const e of m.value.entity || []) {
+      if (!e.tripUpdate?.trip) continue;
+      const t = placeTrip(e.tripUpdate, now);
+      if (t) next.push(t);
+    }
+  }
+  if (next.length) trains = next;
+  $("s-trains").textContent = `${trains.length} live trains (position estimated between stations)`;
+}
+
+function trainFeatures() {
+  const now = Date.now() / 1000;
+  return {
+    type: "FeatureCollection",
+    features: trains.map((t) => {
+      const span = t.d2 - t.d1, dur = t.t2 - t.t1;
+      // Before reaching stop 1, the train is one stop-gap back; after it, it heads to stop 2.
+      const along = now < t.t1
+        ? t.d1 - span * Math.min(1, (t.t1 - now) / dur)
+        : t.d1 + span * Math.min(1, (now - t.t1) / dur);
+      return { type: "Feature", properties: { color: t.color, route: t.route }, geometry: { type: "Point", coordinates: pointAlong(t.shape, along) } };
+    }),
+  };
+}
+
+function addLineLayers() {
+  map.addSource("subway-lines", {
+    type: "geojson",
+    data: {
+      type: "FeatureCollection",
+      features: Object.values(shapes).map((s) => ({ type: "Feature", properties: { color: s.color }, geometry: { type: "LineString", coordinates: s.coords } })),
+    },
+  });
+  map.addLayer({
+    id: "subway-lines",
+    type: "line",
+    source: "subway-lines",
+    layout: { "line-cap": "round", "line-join": "round" },
+    paint: {
+      "line-color": ["get", "color"],
+      "line-width": ["interpolate", ["linear"], ["zoom"], 10, 1.2, 14, 3.5],
+      "line-opacity": 0.8,
+    },
+  });
+}
+
+function addTrainLayer() {
+  map.addSource("trains", { type: "geojson", data: trainFeatures() });
+  map.addLayer({
+    id: "trains",
+    type: "circle",
+    source: "trains",
+    paint: {
+      "circle-color": ["get", "color"],
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 3, 14, 7],
+      "circle-stroke-color": "#ffffff",
+      "circle-stroke-width": ["interpolate", ["linear"], ["zoom"], 10, 1, 14, 2],
+      "circle-pitch-alignment": "map",
+    },
+  });
+}
+
+function startTrains() {
+  refreshTrains().catch(() => {});
+  setInterval(() => refreshTrains().catch(() => {}), TRAIN_REFRESH_MS);
+  let last = 0;
+  const frame = (ts) => {
+    // ~7 updates a second is smooth enough and keeps the map responsive; skip when the tab is hidden.
+    if (ts - last > TRAIN_FRAME_MS && !document.hidden && trains.length) {
+      last = ts;
+      map.getSource("trains")?.setData(trainFeatures());
+    }
+    requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
+}
+
 // ---------- voice (ElevenLabs) ----------
 
 const ALIASES = [[/\bstreet\b/g, "st"], [/\bavenue\b/g, "av"], [/\bave\b/g, "av"], [/\bsquare\b/g, "sq"],
@@ -448,6 +617,8 @@ document.querySelector("elevenlabs-convai").addEventListener("elevenlabs-convai:
 Promise.all([loadAll(), new Promise((r) => map.on("load", r))])
   .then(() => {
     setupLayers();
+    addTrainLayer();
+    startTrains();
     fillSearch();
     setupTripForm();
     render();

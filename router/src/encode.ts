@@ -83,7 +83,7 @@ export function decode(input: Uint8Array): TimetableData {
     if (byteOffset + section.length * Type.BYTES_PER_ELEMENT > bytes.byteOffset + bytes.byteLength) {
       throw new Error(`truncated section ${section.name}`);
     }
-    result[section.name] = new Type(bytes.buffer, byteOffset, section.length);
+    result[section.name] = new Type(bytes.buffer as ArrayBuffer, byteOffset, section.length);
   }
   for (const name of [...SCALARS, ...STRINGS, ...Object.keys(ARRAYS)]) {
     if (!(name in result)) throw new Error(`missing ${name}`);

@@ -69,6 +69,8 @@ def write_outages_json(conn, path):
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as fh:
             json.dump(payload, fh, separators=(",", ":"))
+        # mkstemp creates 0600; this file is served to browsers.
+        os.chmod(tmp, 0o644)
         os.replace(tmp, path)
     except Exception:
         try:

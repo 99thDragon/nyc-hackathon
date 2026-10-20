@@ -31,13 +31,14 @@ function groupStations(rows) {
   const out = new Map();
   for (const r of rows) {
     const id = r.complex_id;
-    const c = out.get(id) || { id, names: new Set(), nameCount: {}, routes: new Set(), lat: 0, lng: 0, n: 0, ada: 0, notes: new Set() };
+    const c = out.get(id) || { id, names: new Set(), nameCount: {}, routes: new Set(), lat: 0, lng: 0, n: 0, ada: 0, notes: new Set(), stopIds: new Set() };
     c.names.add(r.stop_name);
     c.nameCount[r.stop_name] = (c.nameCount[r.stop_name] || 0) + 1;
     (r.daytime_routes || "").split(" ").filter(Boolean).forEach((x) => c.routes.add(x));
     c.lat += +r.gtfs_latitude;
     c.lng += +r.gtfs_longitude;
     c.n += 1;
+    c.stopIds.add(r.gtfs_stop_id);
     const ada = +r.ada;
     // 1 = fully accessible beats 2 = partial beats 0 = none
     if (ada === 1 || (ada === 2 && c.ada === 0)) c.ada = ada;
@@ -56,13 +57,17 @@ function groupStations(rows) {
 }
 
 function applyOutages(outages) {
-  for (const c of complexes.values()) c.outages = [];
+  for (const c of complexes.values()) {
+    c.outages = [];
+    c.escalatorsOut = [];
+  }
   for (const o of outages) {
-    if (o.isupcomingoutage !== "N" || o.equipmenttype !== "EL" || o.ADA !== "Y") continue;
+    if (o.isupcomingoutage !== "N") continue;
     const eq = equipment.get(o.equipment);
-    if (!eq) continue;
-    const c = complexes.get(eq.stationcomplexid);
-    if (c) c.outages.push({ ...o, alt: eq.alternativeroute, redundant: eq.redundant === 1 });
+    const c = eq && complexes.get(eq.stationcomplexid);
+    if (!c) continue;
+    if (o.equipmenttype === "ES") c.escalatorsOut.push(o);
+    if (o.equipmenttype === "EL" && o.ADA === "Y") c.outages.push({ ...o, alt: eq.alternativeroute, redundant: eq.redundant === 1 });
   }
   for (const c of complexes.values()) {
     const blocking = c.outages.filter((o) => !o.redundant);
@@ -276,6 +281,115 @@ function fillSearch() {
   });
 }
 
+// ---------- trip check: "how safe is this trip?" answered with facts ----------
+// Live train arrivals come from the MTA GTFS-realtime feeds (protobuf, no key).
+
+const RT_BASE = "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2F";
+const FEED_FOR_ROUTE = {
+  1: "gtfs", 2: "gtfs", 3: "gtfs", 4: "gtfs", 5: "gtfs", 6: "gtfs", 7: "gtfs", S: "gtfs",
+  A: "gtfs-ace", C: "gtfs-ace", E: "gtfs-ace",
+  B: "gtfs-bdfm", D: "gtfs-bdfm", F: "gtfs-bdfm", M: "gtfs-bdfm",
+  G: "gtfs-g", J: "gtfs-jz", Z: "gtfs-jz", L: "gtfs-l",
+  N: "gtfs-nqrw", Q: "gtfs-nqrw", R: "gtfs-nqrw", W: "gtfs-nqrw", SIR: "gtfs-si",
+};
+const RT_PROTO = `syntax = "proto2";
+message FeedMessage { repeated FeedEntity entity = 2; }
+message FeedEntity { required string id = 1; optional TripUpdate trip_update = 3; }
+message TripUpdate { required TripDescriptor trip = 1; repeated StopTimeUpdate stop_time_update = 2; }
+message TripDescriptor { optional string route_id = 5; }
+message StopTimeUpdate { optional StopTimeEvent arrival = 2; optional StopTimeEvent departure = 3; optional string stop_id = 4; }
+message StopTimeEvent { optional int64 time = 2; }`;
+let FeedMessage = null;
+
+async function getFeed(name) {
+  FeedMessage ??= protobuf.parse(RT_PROTO).root.lookupType("FeedMessage");
+  const res = await fetch(RT_BASE + name, { cache: "no-store" });
+  if (!res.ok) throw new Error(`train feed ${res.status}`);
+  return FeedMessage.toObject(FeedMessage.decode(new Uint8Array(await res.arrayBuffer())), { longs: Number });
+}
+
+// Next direct train from a to b: a trip that stops at a, and later at b.
+async function nextDirectTrain(a, b) {
+  const shared = a.routes.filter((r) => b.routes.includes(r));
+  const feeds = [...new Set(shared.map((r) => FEED_FOR_ROUTE[r]).filter(Boolean))];
+  if (!feeds.length) return { direct: false };
+  const now = Date.now() / 1000;
+  const base = (id) => id.replace(/[NS]$/, "");
+  let best = null;
+  for (const msg of await Promise.all(feeds.map(getFeed))) {
+    for (const e of msg.entity || []) {
+      const stops = e.tripUpdate?.stopTimeUpdate || [];
+      const i = stops.findIndex((s) => a.stopIds.has(base(s.stopId || "")));
+      if (i < 0 || !stops.slice(i + 1).some((s) => b.stopIds.has(base(s.stopId || "")))) continue;
+      const t = stops[i].departure?.time || stops[i].arrival?.time;
+      if (t > now && (!best || t < best.t)) best = { t, route: e.tripUpdate.trip.routeId };
+    }
+  }
+  return best ? { direct: true, route: best.route, waitMin: Math.round((best.t - now) / 60) } : { direct: true, route: null };
+}
+
+async function tripCheck(a, b) {
+  const train = await nextDirectTrain(a, b).catch(() => ({ direct: null }));
+  const checks = [];
+  const endCheck = (label, c) => {
+    if (c.status === "yes") return { ok: true, text: `${label}: ${c.name} is step-free right now` };
+    if (c.status === "out") return { ok: false, text: `${label}: elevator out at ${c.name} (${c.outages[0].serving})` };
+    return { ok: false, text: `${label}: ${c.name} has stairs only` };
+  };
+  checks.push(endCheck("Start", a), endCheck("End", b));
+
+  const esc = [...a.escalatorsOut.map((o) => [a, o]), ...b.escalatorsOut.map((o) => [b, o])];
+  checks.push(esc.length
+    ? { ok: null, text: `${esc.length} escalator${esc.length > 1 ? "s" : ""} out: ${esc.map(([c]) => c.name).filter((v, i, x) => x.indexOf(v) === i).join(", ")}` }
+    : { ok: true, text: "No escalators out at either end" });
+
+  if (train.direct === null) checks.push({ ok: null, text: "Couldn't load live train times" });
+  else if (!train.direct) checks.push({ ok: null, text: "No direct train. You'll need a transfer, and we can't check transfer elevators yet." });
+  else if (!train.route) checks.push({ ok: null, text: `Direct on the ${a.routes.filter((r) => b.routes.includes(r)).join("/")}, but no train is scheduled soon` });
+  else checks.push({ ok: train.waitMin <= 10, text: `Next direct ${train.route} train in ${train.waitMin} min` });
+
+  const stepFree = a.status === "yes" && b.status === "yes";
+  const verdict = !stepFree ? "NOT STEP-FREE" : checks.every((c) => c.ok) ? "GOOD TO GO" : "HEADS UP";
+  return { from: a.name, to: b.name, verdict, checks, wait_min: train.waitMin ?? null };
+}
+
+async function runTripCheck(a, b) {
+  const box = $("t-result");
+  box.hidden = false;
+  box.replaceChildren("Checking live MTA data…");
+  const r = await tripCheck(a, b);
+  const big = document.createElement("p");
+  big.className = `big small ${r.verdict === "GOOD TO GO" ? "yes" : r.verdict === "HEADS UP" ? "warn" : "out"}`;
+  big.textContent = r.verdict;
+  const ul = document.createElement("ul");
+  ul.className = "checks";
+  for (const c of r.checks) {
+    const li = document.createElement("li");
+    li.className = c.ok === true ? "ok" : c.ok === false ? "bad" : "meh";
+    li.textContent = c.text;
+    ul.append(li);
+  }
+  box.replaceChildren(big, ul);
+  selectedId = null;
+  render();
+  map.fitBounds([[Math.min(a.lng, b.lng), Math.min(a.lat, b.lat)], [Math.max(a.lng, b.lng), Math.max(a.lat, b.lat)]],
+    { padding: 120, pitch: 55, maxZoom: 15, duration: 2000 });
+  return r;
+}
+
+function setupTripForm() {
+  $("t-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const a = findStation($("t-from").value), b = findStation($("t-to").value);
+    if (!a || !b) {
+      $("t-result").hidden = false;
+      $("t-result").textContent = `Couldn't find ${!a ? "the start" : "the end"} station. Try the name with a train line.`;
+      return;
+    }
+    runTripCheck(a, b);
+  });
+}
+
 // ---------- voice (ElevenLabs) ----------
 
 const ALIASES = [[/\bstreet\b/g, "st"], [/\bavenue\b/g, "av"], [/\bave\b/g, "av"], [/\bsquare\b/g, "sq"],
@@ -319,6 +433,13 @@ document.querySelector("elevenlabs-convai").addEventListener("elevenlabs-convai:
       select(c.id);
       return JSON.stringify(verdictForVoice(c));
     },
+    get_trip_check: async ({ from, to }) => {
+      const a = from && findStation(from), b = to && findStation(to);
+      if (!a || !b) return JSON.stringify({ error: `Couldn't find a station matching "${!a ? from : to}".` });
+      $("t-from").value = a.name;
+      $("t-to").value = b.name;
+      return JSON.stringify(await runTripCheck(a, b));
+    },
   };
 });
 
@@ -328,6 +449,7 @@ Promise.all([loadAll(), new Promise((r) => map.on("load", r))])
   .then(() => {
     setupLayers();
     fillSearch();
+    setupTripForm();
     render();
     setInterval(refreshOutages, REFRESH_MS);
   })

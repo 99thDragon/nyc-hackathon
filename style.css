@@ -48,6 +48,29 @@ h1 { margin: 0; font-size: 26px; letter-spacing: -0.01em; }
 }
 .pro b { float: right; color: #111; background: var(--accent); border-radius: 4px; padding: 0 6px; font-size: 12px; }
 
+#trip { border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 8px; }
+#trip h2 { margin: 0; font-size: 18px; }
+#trip .sub { margin: 0; color: var(--muted); font-size: 13px; }
+#t-form { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+#t-form input {
+  width: 100%; font: inherit; font-size: 15px; color: var(--fg); background: #1c1f24; border: 1px solid var(--line);
+  border-radius: 10px; padding: 9px 10px;
+}
+#t-form input:focus, #t-form button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+#t-form button {
+  grid-column: 1 / -1; font: inherit; font-weight: 700; color: #111; background: var(--accent); border: 0;
+  border-radius: 10px; padding: 10px; cursor: pointer;
+}
+#t-result { display: grid; gap: 6px; font-size: 14px; }
+.big.small { font-size: 30px; }
+.big.warn { color: var(--accent); }
+.checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; }
+.checks li { padding-left: 24px; position: relative; }
+.checks li::before { position: absolute; left: 0; font-weight: 800; }
+.checks .ok::before { content: "✓"; color: var(--yes); }
+.checks .bad::before { content: "✗"; color: var(--out); }
+.checks .meh::before { content: "!"; color: var(--accent); left: 4px; }
+
 #summary { border-top: 1px solid var(--line); padding-top: 12px; }
 .count { margin: 0 0 8px; font-weight: 600; }
 .legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 14px; color: var(--muted); }

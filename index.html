@@ -31,6 +31,17 @@
     <button class="pro" type="button" disabled>Alert me when this changes <b>PRO</b></button>
   </section>
 
+  <section id="trip">
+    <h2>How safe is this trip?</h2>
+    <p class="sub">We check facts, not feelings: step-free at both ends, escalators, and the wait for a direct train.</p>
+    <form id="t-form">
+      <label><span class="sr">From</span><input id="t-from" list="stations" placeholder="From" autocomplete="off"></label>
+      <label><span class="sr">To</span><input id="t-to" list="stations" placeholder="To" autocomplete="off"></label>
+      <button type="submit">Check trip</button>
+    </form>
+    <div id="t-result" hidden></div>
+  </section>
+
   <section id="summary">
     <p id="s-count" class="count">Loading live MTA data…</p>
     <ul class="legend">
@@ -47,6 +58,7 @@
 <elevenlabs-convai agent-id="agent_6601m5bb35ptfxgt6qk19r5xzgrs" action-text="Ask by voice" start-call-text="Talk to Magic Carpet"></elevenlabs-convai>
 <script src="https://unpkg.com/@elevenlabs/convai-widget-embed@0.18.3" async></script>
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/protobufjs@7.4.0/dist/protobuf.min.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -392,8 +392,45 @@ async function nextDirectTrain(a, b) {
   return best ? { direct: true, route: best.route, waitMin: Math.round((best.t - now) / 60) } : { direct: true, route: null };
 }
 
+// Trips with no direct train: router.js (built from router/) plans over data/timetable.bin with live trip
+// updates, and each transfer station gets the same live step-free check as the ends.
+const complexOfStop = (id) => [...complexes.values()].find((c) => c.stopIds.has(id));
+const clock = (iso) => new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+
+async function transferRoute(a, b) {
+  const result = await window.MagicCarpetRouter?.plan([...a.stopIds], [...b.stopIds]).catch(() => null);
+  const transfersOf = (plan) => {
+    const via = [];
+    for (let i = 0; i + 1 < plan.rides.length; i++) {
+      for (const end of [plan.rides[i].to, plan.rides[i + 1].from]) {
+        const c = complexOfStop(end.stationID);
+        if (c && c !== a && c !== b && !via.includes(c)) via.push(c);
+      }
+    }
+    return via;
+  };
+  // Plans arrive earliest first; take the earliest whose transfers are all step-free, else the earliest.
+  const options = (result?.plans ?? []).map((plan) => ({ plan, via: transfersOf(plan) }));
+  const chosen = options.find((o) => o.via.every((c) => c.status === "yes")) ?? options[0];
+  if (!chosen) return null;
+  const { plan, via } = chosen;
+  const steps = plan.rides.map((ride, i) => {
+    const walk = i > 0 && plan.rides[i - 1].to.stationID !== ride.from.stationID ? `walk to ${ride.from.name}, ` : "";
+    return `${walk}take the ${ride.line} to ${ride.to.name}`;
+  });
+  const summary = steps.join(", then ").replace(/^./, (s) => s.toUpperCase());
+  return {
+    plan,
+    via,
+    live: result.live,
+    summary,
+    waitMin: Math.max(0, Math.round((Date.parse(plan.rides[0].departs) - Date.now()) / 60_000)),
+  };
+}
+
 async function tripCheck(a, b) {
   const train = await nextDirectTrain(a, b).catch(() => ({ direct: null }));
+  const route = train.direct === false ? await transferRoute(a, b) : null;
   const checks = [];
   const endCheck = (label, c) => {
     if (c.status === "yes") return { ok: true, text: `${label}: ${c.name} is step-free right now` };
@@ -408,13 +445,36 @@ async function tripCheck(a, b) {
     : { ok: true, text: "No escalators out at either end" });
 
   if (train.direct === null) checks.push({ ok: null, text: "Couldn't load live train times" });
-  else if (!train.direct) checks.push({ ok: null, text: "No direct train. You'll need a transfer, and we can't check transfer elevators yet." });
+  else if (!train.direct && route) {
+    checks.push({ ok: true, text: `${route.summary}. Leaves ${clock(route.plan.rides[0].departs)}, arrives ${clock(route.plan.arrives)} (${route.plan.minutes} min)` });
+    for (const c of route.via) checks.push(endCheck("Transfer", c));
+    const first = route.plan.rides[0].line;
+    checks.push({ ok: route.waitMin <= 10, text: `Next ${first} train in ${route.waitMin} min${route.live ? "" : " (scheduled, live times unavailable)"}` });
+  }
+  else if (!train.direct) checks.push({ ok: null, text: "No direct train, and no route with up to 3 trains found." });
   else if (!train.route) checks.push({ ok: null, text: `Direct on the ${a.routes.filter((r) => b.routes.includes(r)).join("/")}, but no train is scheduled soon` });
   else checks.push({ ok: train.waitMin <= 10, text: `Next direct ${train.route} train in ${train.waitMin} min` });
 
-  const stepFree = a.status === "yes" && b.status === "yes";
+  const via = route?.via ?? [];
+  const stepFree = [a, b, ...via].every((c) => c.status === "yes");
   const verdict = !stepFree ? "NOT STEP-FREE" : checks.every((c) => c.ok) ? "GOOD TO GO" : "HEADS UP";
-  return { from: a.name, to: b.name, verdict, checks, wait_min: train.waitMin ?? null };
+  return {
+    from: a.name,
+    to: b.name,
+    verdict,
+    checks,
+    wait_min: train.waitMin ?? route?.waitMin ?? null,
+    route: route && {
+      summary: route.summary,
+      minutes: route.plan.minutes,
+      live: route.live,
+      rides: route.plan.rides.map((r) => ({ line: r.line, from: r.from.name, to: r.to.name, departs: clock(r.departs), arrives: clock(r.arrives) })),
+      transfers: via.map((c) => {
+        const alt = c.status === "yes" ? null : nearestStepFree(c);
+        return { station: c.name, lines: c.routes.join(" "), step_free_now: c.status === "yes", nearest_step_free: alt ? alt.c.name : null };
+      }),
+    },
+  };
 }
 
 async function runTripCheck(a, b) {

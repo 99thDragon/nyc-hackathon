@@ -42,6 +42,10 @@ export interface Unit {
   altRouteText: string | null;
   // 90-day availability, 0-100, from rc78-7x78 and the poller log. null = unknown.
   availability90Pct: number | null;
+  // Set by the live loader; used to pick the elevators for a platform.
+  stationName?: string;
+  complexId?: string;
+  serving?: string;
 }
 
 export interface Outage {

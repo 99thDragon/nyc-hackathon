@@ -5,10 +5,15 @@
   "type": "module",
   "description": "Turns MTA elevator and station data into rider-ready verdicts",
   "scripts": {
-    "start": "node src/server.js",
-    "test": "node --test test/*.test.js"
+    "start": "node src/server.ts",
+    "test": "node --test test/*.test.ts",
+    "typecheck": "tsc"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2"
   }
 }

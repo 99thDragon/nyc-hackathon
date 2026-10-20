@@ -183,7 +183,7 @@ function render() {
   const all = [...complexes.values()];
   const out = all.filter((c) => c.status === "out").length;
   const yes = all.filter((c) => c.status === "yes").length;
-  $("s-count").textContent = `${out} accessible stations have an elevator out right now. ${yes} are step-free.`;
+  $("s-count").textContent = `${out} elevators out`;
   $("fresh").textContent = `Data from the MTA, checked ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}. It may not be current.`;
   if (selectedId) showVerdict(complexes.get(selectedId));
 }
@@ -209,6 +209,7 @@ function nearestStepFree(c) {
 
 function showVerdict(c) {
   $("verdict").hidden = false;
+  $("verdict").dataset.status = c.status;
   $("v-name").textContent = c.name;
   $("v-routes").textContent = c.routes.join(" ");
   const big = $("v-big");
@@ -261,6 +262,7 @@ function showVerdict(c) {
 function select(id) {
   const c = complexes.get(String(id));
   if (!c) return;
+  showTab("station");
   selectedId = c.id;
   render();
   $("q").value = c.name;
@@ -360,6 +362,7 @@ async function tripCheck(a, b) {
 }
 
 async function runTripCheck(a, b) {
+  showTab("trip");
   const box = $("t-result");
   box.hidden = false;
   box.replaceChildren("Checking live MTA data…");
@@ -489,7 +492,7 @@ async function refreshTrains() {
     }
   }
   if (next.length) trains = next;
-  $("s-trains").textContent = `${trains.length} live trains (position estimated between stations)`;
+  $("s-trains").textContent = `${trains.length} trains`;
 }
 
 function trainFeatures() {
@@ -612,6 +615,24 @@ document.querySelector("elevenlabs-convai").addEventListener("elevenlabs-convai:
   };
 });
 
+// ---------- tabs and quick picks ----------
+
+function showTab(name) {
+  for (const b of document.querySelectorAll("[data-tab]")) b.setAttribute("aria-selected", String(b.dataset.tab === name));
+  $("tab-station").hidden = name !== "station";
+  $("trip").hidden = name !== "trip";
+}
+
+function setupTabs() {
+  for (const b of document.querySelectorAll("[data-tab]")) b.addEventListener("click", () => showTab(b.dataset.tab));
+  for (const b of document.querySelectorAll("[data-pick]")) {
+    b.addEventListener("click", () => {
+      const c = findStation(b.dataset.pick);
+      if (c) select(c.id);
+    });
+  }
+}
+
 // ---------- start ----------
 
 Promise.all([loadAll(), new Promise((r) => map.on("load", r))])
@@ -621,6 +642,7 @@ Promise.all([loadAll(), new Promise((r) => map.on("load", r))])
     startTrains();
     fillSearch();
     setupTripForm();
+    setupTabs();
     render();
     setInterval(refreshOutages, REFRESH_MS);
   })

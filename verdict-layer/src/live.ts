@@ -70,10 +70,16 @@ export function toOutages(rows: OutageRow[]): Outage[] {
     }));
 }
 
-export function toEquipment(rows: EquipmentRow[], availability: Map<string, number>): Record<string, Unit> {
+export function toEquipment(
+  rows: EquipmentRow[],
+  availability: Map<string, number>,
+  // Units under long-term work (e.g. capital replacement) are marked isactive = "N" but are still on the
+  // step-free route and still listed as outages. Keep any unit the outage feed mentions.
+  reportedOut: Set<string> = new Set(),
+): Record<string, Unit> {
   const out: Record<string, Unit> = {};
   for (const r of rows) {
-    if (r.equipmenttype !== "EL" || r.isactive !== "Y") continue;
+    if (r.equipmenttype !== "EL" || (r.isactive !== "Y" && !reportedOut.has(r.equipmentno))) continue;
     out[r.equipmentno] = {
       id: r.equipmentno,
       desc: r.shortdescription || r.serving,
@@ -191,7 +197,7 @@ export async function loadLiveContext(now = Date.now()): Promise<Context> {
     outages: toOutages(outageRows.rows),
   };
   return {
-    equipment: toEquipment(equipmentRows, avail.byUnit),
+    equipment: toEquipment(equipmentRows, avail.byUnit, new Set(feed.outages.map((o) => o.unitId))),
     feed,
     availabilityAsOf: avail.asOf,
     now,

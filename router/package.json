@@ -6,10 +6,13 @@
   "description": "Subway A-to-B routing: McRAPTOR over the MTA GTFS timetable, ported from scaffold",
   "scripts": {
     "test": "node --test test/*.test.ts",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "build:browser": "esbuild src/browser.ts --bundle --format=iife --platform=browser --target=es2022 --minify --outfile=../router.js",
+    "build:timetable": "node bin/compile.ts --out ../data/timetable.bin"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
+    "esbuild": "^0.28.2",
     "typescript": "^7.0.2"
   }
 }

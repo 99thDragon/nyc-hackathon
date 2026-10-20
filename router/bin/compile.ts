@@ -1,4 +1,4 @@
-// Usage: node bin/compile.ts [YYYYMMDD] [--offline]. Writes .cache/timetable-YYYYMMDD.bin, the file a Cron job
+// Usage: node bin/compile.ts [YYYYMMDD] [--offline] [--out file]. Writes .cache/timetable-YYYYMMDD.bin by default, the file a Cron job
 // would upload to Blob storage.
 import fs from "node:fs";
 import path from "node:path";
@@ -16,7 +16,8 @@ const started = performance.now();
 const data = await compile([source], date);
 const seconds = (performance.now() - started) / 1000;
 const bytes = encode(data);
-const output = path.join(cache, `timetable-${date}.bin`);
+const outFlag = args.indexOf("--out");
+const output = outFlag >= 0 && args[outFlag + 1] ? path.resolve(args[outFlag + 1]) : path.join(cache, `timetable-${date}.bin`);
 fs.writeFileSync(output, bytes);
 console.log(JSON.stringify({
   date,

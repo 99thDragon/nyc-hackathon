@@ -28,7 +28,7 @@ Not a status page. A judgment, with its receipts one tap away.
 
 Phase 1 of the proposal is the only phase that needs **zero contributors**. It runs entirely on official data, which means no cold-start problem at 8pm with no users. Everything that requires field survey or crowd reports is out tonight by construction, not by compromise.
 
-The proposal's own closing line is the other half of the argument: start the outage poller before anything else, because per-elevator history cannot be backfilled. That makes the poller the first thing built tonight even though it has almost no history by pitch time — see §7 for why that is still the strongest beat in the demo.
+The proposal's own closing line is the other half of the argument: start the outage poller before anything else, because the event history cannot be backfilled. That makes the poller the first thing built tonight even though it has almost no history by pitch time — see §7 for why that is still the strongest beat in the demo.
 
 ## 3. Demo script — build toward this
 
@@ -40,7 +40,7 @@ Write the demo first and build backward to it. Three stations, chosen and rehear
 | 2. The real no | A station where an elevator is genuinely out right now, with the fallback station and walk time | This is the product. A live outage nobody staged |
 | 3. "We don't know" | A station with partial or missing data, saying so plainly | The credibility move. Judges notice a product that admits gaps |
 | 4. **Audience joins** | Put the URL on screen. Ask the room to look up their own home station | All 496 stations return something real, because they are seeded from official data. Nobody hits an empty state |
-| 5. The moat | Show the append-only outage log with tonight's timestamps, and say how many rows it has | "This started recording at 8pm. In 90 days it is the only per-elevator reliability dataset that exists" |
+| 5. The moat | Show the append-only outage log with tonight's timestamps, and say how many rows it has | "The MTA publishes monthly averages seven weeks late. This started recording at 8pm; in 90 days it is the only per-outage event record that exists" |
 | 6. The money | Free vs Pro, §6 | RevenueCat night. Non-negotiable |
 
 Beat 4 is the one that maps to what the top-three projects at the benchmark event shared — the audience participates rather than watching. Beat 5 is what makes a one-night build sound like a company.
@@ -56,7 +56,7 @@ I queried every one of these at ~8:10pm on Oct 19, 2026. Counts are real, not fr
 | MTA Subway Stations | `39hk-dx4f` | **496 stations**; `ada` (0/1/2), **`ada_northbound` / `ada_southbound`**, `ada_notes`, `gtfs_stop_id`, lat/lon, `daytime_routes`, `north_direction_label` / `south_direction_label` | ✅ |
 | Subway Elevator & Escalator Asset Inventory | `94fv-bak7` | **482 elevators** (plus 277 escalators — filter on `elevator_or_escalator`); `equipment_code` (the ID the live feed uses), **`street_access`**, **`elevator_mezzanine_1_access`** / **`elevator_mezzanine_2_access`** / **`elevator_platform_access`**, `elevator_direction_serviced`, `alternative_route`, `notes`, `service_status_code`, `station_mrn` | ✅ |
 | Subway Station Amenities | `6yjv-fk7g` | Monthly snapshots, latest **Sep 2026**. Distinct in latest month: **115 PUBLIC_RESTROOM**, 446 ELEVATOR, 3,076 HELP_POINT, 266 ADA_FARE_ACCESS_SYSTEM_ENTRANCE | ✅ |
-| Elevator/escalator availability | `rc78-7x78` | Monthly, **systemwide only**, through Aug 2026 | ✅ |
+| Elevator/escalator availability | `rc78-7x78` | **Per unit, monthly**, Jan 2015 → Aug 2026: `equipment_code`, total/scheduled/unscheduled outages, entrapments, AM/PM peak and 24 h availability. 416 elevators in the latest month | ✅ |
 | Accessible platform availability | `thh2-syn7` | Monthly, **borough-level only**, through Aug 2026 | ✅ |
 
 Example call that works with no key:
@@ -115,7 +115,7 @@ The split follows the cost structure, which is what makes it defensible rather t
 | Live step-free verdict | ✅ Any station | ✅ |
 | Nearest step-free alternative | ✅ | ✅ |
 | Amenity badges | ✅ | ✅ |
-| **Elevator reliability history** | — | ✅ The accumulated per-unit record nobody else has |
+| **Elevator reliability history** | — | ✅ Monthly per-unit baseline from `rc78-7x78` **plus** the event record the poller accumulates — real data tonight, not an empty log |
 | **Saved routes** | — | ✅ |
 | **Proactive alerts** when an elevator on a saved route goes down | — | ✅ Push, before you leave the house — on iOS this needs the page added to the home screen; say so if asked |
 | **Offline station pack** | — | ✅ Works on a dead platform signal |
@@ -130,7 +130,7 @@ Build it bottom-up and do not hand-wave a TAM:
 - **Who pays:** accessibility-first riders — wheelchair and walker users, stroller parents, riders with luggage — for whom a broken elevator is a dead end, not an inconvenience. A $4.99 alert that prevents one stranding pays for itself.
 - **Arithmetic:** pull current daily ridership from `ak4z-sape` (MTA Subway Station Monthly Ridership) so the number is cited, then state conversion honestly. At 0.1% of daily riders converting at $4.99/mo, show the MRR. Label the conversion rate as the assumption it is. **`ak4z-sape` is the one dataset cited here that I did not verify tonight — check it returns before T+130, not during the slide.**
 - **Comp:** Exit Strategy NYC has sold static exit data as a paid app for fifteen years. Live accessibility data is worth more than static exit maps.
-- **The moat, in one line:** per-elevator reliability history is unpublished by the MTA — I verified tonight that only systemwide and borough-level monthly figures exist. Every day the poller runs, the gap widens, and it cannot be backfilled by a competitor.
+- **The moat, in one line:** the MTA publishes per-elevator availability only as a monthly average, running about seven weeks behind. Nobody publishes the event record underneath — when each outage started, how long it lasted, which hours it hit. Every day the poller runs that gap widens, and it cannot be backfilled by a competitor. **Do not say per-unit history is unpublished:** `rc78-7x78` is one query away and a judge may know it.
 
 ## 7. Build ladder
 
@@ -144,12 +144,12 @@ Two people in parallel from T+0. Gates are stops, not checkpoints to wave throug
 | T+15 → T+45 | **A:** pull `39hk-dx4f` + `94fv-bak7` to local JSON, join on `station_mrn`, write the verdict function: station + direction → yes/no/**unknown** + reason + fallback station. **B:** page scaffold against a stubbed `verdict()` — picker or geolocate, big verdict, mobile-first, static-first | Both, parallel |
 | T+45 → T+75 | **A:** amenity badges from `6yjv-fk7g`. **B:** wire the real verdict in — evidence on tap, as-of timestamp | Both, parallel |
 | **🚧 Gate 2 (T+75)** | **A real verdict renders for a real station on a real phone. If not, cut amenities and paywall polish and finish this** | — |
-| T+75 → T+105 | **A:** reliability view off the poller log, sparse is fine, then pick and pre-cache the three demo stations. **B:** RevenueCat **Web Billing** paywall — free vs Pro | Both, parallel |
+| T+75 → T+105 | **A:** reliability view — seed it from `rc78-7x78` per-unit monthly so it shows real numbers, with the poller log layered on top — then pick and pre-cache the three demo stations. **B:** RevenueCat **Web Billing** paywall — free vs Pro | Both, parallel |
 | **🚧 Gate 3 (T+105)** | **Paywall present and tappable. RevenueCat night — this is the brief, not a nice-to-have** | — |
 | T+105 → T+130 | Rehearse §3. Screenshot every beat as backup, including beat 2 at the moment it is true | Both |
 | T+130 → T+150 | Money slide. Run the pitch once out loud, on the clock | Both |
 
-The poller keeps running the whole time. By pitch it holds perhaps two hours of log, which across 482 elevators may be a handful of state changes or none at all. That is fine, and it is the argument §2 points here for: **beat 5 is not a claim about tonight's data, it is a claim about the clock.** The log proves the recorder runs and the schema is right; the value is that the MTA publishes no per-unit history, so every row after tonight is one a competitor starting tomorrow can never have. Show the rows you have, say how many there are, and say when it started. A thin log with an honest timestamp makes that point. A padded one destroys it.
+The poller keeps running the whole time. By pitch it holds perhaps two hours of log, which across 482 elevators may be a handful of state changes or none at all. That is fine, and it is the argument §2 points here for: **beat 5 is not a claim about tonight's data, it is a claim about the clock.** The log proves the recorder runs and the schema is right; the value is that the MTA publishes only monthly averages, seven weeks behind, so every event row after tonight is one a competitor starting tomorrow can never have. Show the rows you have, say how many there are, and say when it started. A thin log with an honest timestamp makes that point. A padded one destroys it.
 
 ## 8. Architecture for one night
 
@@ -188,11 +188,11 @@ Before any public launch, the correlation audit in the proposal is a real gate. 
 
 ## 11. Corrections to the proposal, verified tonight
 
-Worth fixing in `Magic Carpet.md` before anyone outside the team reads it. All four checked live against the APIs.
+Worth fixing in `Magic Carpet.md` before anyone outside the team reads it. All four checked live against the APIs — including item 3, which corrects a claim this PRD itself got wrong at first.
 
 1. **The accessibility figure is out of date.** The proposal says "126 of 472 subway stations are fully accessible, or 27%." Live `39hk-dx4f` gives **166 of 496 fully accessible (33%)**, plus 8 partial. Use the live number — it is both current and verifiable on stage.
 2. **Restrooms, help points and accessible fare gates are now published.** The proposal lists these as "not published in usable form — crowd and survey," and its yes/no table sources the tap-reader question to "Survey." `6yjv-fk7g` now publishes all three as official data; what I verified is the latest monthly snapshot, **Sep 2026**. **This is a real unlock: three fields the proposal budgets as months of field survey are free tonight.** The caveat in §5 stands — existence, not working status.
-3. **The moat claim holds, and I verified it.** Per-unit outage history genuinely is not published: `rc78-7x78` is systemwide only, `thh2-syn7` is borough-level only, both end Aug 2026, and there is no live outage dataset on the open portal. The core bet survives contact with the actual APIs.
+3. **The moat claim needs narrowing — and this PRD got it wrong at first.** Per-unit history *is* published: `rc78-7x78` carries total, scheduled and unscheduled outages, entrapments, and AM/PM peak and 24 h availability per `equipment_code`, monthly, back to Jan 2015 — 416 elevators and 278 escalators in its latest month, Aug 2026. What is genuinely unpublished is the **event record**: outage starts, ends, durations, hours, and anything fresher than a release running about seven weeks behind. Two consequences. The moat is event granularity and freshness, not existence — pitch it that way, because the dataset is one query from any judge. And the Pro reliability view can ship **tonight** with real per-elevator numbers instead of an empty log, which makes it a stronger screen than planned.
 4. **A lead on car guidance.** `6yjv-fk7g` carries **446 ELEVATOR records with individual lat/lon**. That is not car position, but it does tell you **which end of the platform** an elevator sits at — which is most of what a wheelchair user needs from beat 3 of the car question. Not tonight, but it is a cheaper path into the proposal's most expensive feature than a full field survey.
 
 Also cosmetic, from the Markdown export: two diagrams are now placeholder text at lines 221 and 229, and the prose at lines 225 and 231 refers to boxes and gates the reader cannot see.

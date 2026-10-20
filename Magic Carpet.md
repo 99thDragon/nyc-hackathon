@@ -36,7 +36,7 @@ The MTA knows the system has a condition problem in the aggregate: its own Sprin
 
 Three things nobody currently gives a rider:
 
-1. **Reliability, not status.** MTA publishes availability history only as a systemwide monthly percentage ([dataset rc78-7x78](https://catalog.data.gov/dataset/mta-nyct-subway-elevator-and-escalator-availability-beginning-2015)). The only other published cut is borough-level ([dataset thh2-syn7](https://data.ny.gov/d/thh2-syn7)), and both series end Aug 2026; there is no live outage dataset on the open portal at all. Per-unit history does not exist publicly — checked against the APIs, not assumed. So no one can tell you that a particular elevator is down a third of the time — which is exactly what decides whether you route through that station.
+1. **Event history, not monthly averages.** Per-unit history does exist, and an earlier draft of this document was wrong to say otherwise: [`rc78-7x78`](https://data.ny.gov/d/rc78-7x78) publishes outages, entrapments and peak availability per `equipment_code` every month back to Jan 2015 — 416 elevators in its latest month, Aug 2026. What nobody publishes is the **event record underneath**: when each outage began and ended, how long it ran, which hours of the day it hit, and anything fresher than a monthly release running about seven weeks behind. So the agency can tell you an elevator averaged 93% last August. It cannot tell you that this elevator fails most weekday evenings — which is what actually decides whether you route through that station.
 2. **Condition, per station.** Cleanliness, smell, noise, bathroom reality. The MTA's own Passenger Environment Survey, which measured station conditions, stopped being published after 2019.
 3. **Where to stand.** Car and door guidance exists only in one static paid app, built by hand over fifteen years, and covers exits rather than elevators or accessibility.
 
@@ -52,7 +52,7 @@ Three consequences for the design:
 
 - **Every answer is a verdict, not a reading.** Not "elevator ES241: ACTIVE OUTAGE, reason: maintenance" but **No — no step-free route to the uptown platform right now. Nearest step-free alternative: 14 St–6 Av, 4 min walk.**
 - **Opinions must be defensible.** A verdict carries its evidence on tap: what it was computed from, how many reports, how recent, how confident. A rating nobody can interrogate is a rumor.
-- **The reliability history is the moat.** Nobody publishes per-elevator history, but the live outage feed can be polled and accumulated. Six months of polling produces a dataset that cannot be bought, bought back, or scraped from anyone else — and it compounds, which is the only kind of advantage worth building on in a space where the incumbent has the official data.
+- **The reliability history is the moat.** Per-elevator *monthly* availability is published, so the starting point is better than it looks and a reliability score can ship on day one. What nobody publishes is the event record — outage starts, durations, time-of-day patterns — and the live outage feed can be polled and accumulated into exactly that. Six months of polling produces a dataset that cannot be bought, bought back, or scraped from anyone else — and it compounds, which is the only kind of advantage worth building on in a space where the incumbent has the official data.
 
 ## The rating system
 
@@ -143,12 +143,12 @@ About half the proposed fields can be filled from official sources on day one; t
 | [MTA Subway Stations dataset](https://catalog.data.gov/dataset/mta-subway-stations) | All stations with GTFS stop IDs and ADA status (0 = not accessible, 1 = full, 2 = partial, plus direction notes) | data.ny.gov, open |
 | [Subway Station Amenities](https://data.ny.gov/d/6yjv-fk7g) | Monthly snapshots, per station: restrooms, elevators, help points, accessible fare-gate entrances. **Existence, not working status** | data.ny.gov, open |
 | [Subway GTFS static + GTFS-RT](https://www.mta.info/developers) | Stops, routes, transfers, headways, live arrivals | Open; realtime via api.mta.info |
-| [Elevator/escalator availability, 2015–](https://catalog.data.gov/dataset/mta-nyct-subway-elevator-and-escalator-availability-beginning-2015) | Monthly availability — **systemwide only** | data.ny.gov, open |
+| [Elevator/escalator availability, 2015–](https://catalog.data.gov/dataset/mta-nyct-subway-elevator-and-escalator-availability-beginning-2015) | Monthly availability **per unit** (`equipment_code`): outages, entrapments, AM/PM peak and 24 h availability, Jan 2015 → Aug 2026 | data.ny.gov, open |
 | [MTA Pulse Survey, 2025–](https://catalog.data.gov/dataset/mta-pulse-survey-beginning-2025) | Satisfaction scores by mode and question | data.ny.gov, open |
 
 ### Not available — must be built
 
-- **Per-unit outage history.** The only published history is systemwide (`rc78-7x78`) or borough-level (`thh2-syn7`), both ending Aug 2026. This is the gap the product fills, by polling the outages feed on a schedule and recording every state change. Cheap to run, impossible to backfill — which is the argument for starting the poller before anything else.
+- **Event-level outage history.** Per-unit *monthly* availability is published (`rc78-7x78`, back to 2015), so reliability scores have a real baseline from day one. What is missing is the record underneath: each outage's start, end, duration and hour, and anything fresher than a monthly release about seven weeks behind. That is the gap the product fills, by polling the outages feed on a schedule and recording every state change. Cheap to run, impossible to backfill — which is the argument for starting the poller before anything else.
 - **Car and door positions.** No feed. Field survey plus crowd confirmation.
 - **Station condition.** The Passenger Environment Survey stopped after 2019. Crowd plus our own audits.
 - **Whether a bathroom is open and working; booth staffing; gate-reader placement.** Note what changed here: `6yjv-fk7g` now publishes that a restroom, help point or accessible fare-gate entrance **exists**, which removes months of field survey from the plan. What it does not publish is whether any of them is open, working, staffed, or reachable from the wide gate. That half stays crowd and survey.
@@ -302,4 +302,4 @@ The two accented boxes are the whole technical argument. Everything else here is
 
 ### What to do first, regardless of those answers
 
-**Start the outage poller this week.** It is perhaps a day of work, it costs almost nothing to run, and every day it is not running is a day of per-elevator reliability history that cannot be recovered later. That dataset is the product's only durable advantage, and it is the one thing here that gets strictly more valuable while the open questions are being argued about.
+**Start the outage poller this week.** It is perhaps a day of work, it costs almost nothing to run, and every day it is not running is a day of per-outage event history that cannot be recovered later. The monthly per-unit averages will still be there; the event record will not. That dataset is the product's only durable advantage, and it is the one thing here that gets strictly more valuable while the open questions are being argued about.

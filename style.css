@@ -86,3 +86,10 @@ h1 { margin: 0; font-size: 26px; letter-spacing: -0.01em; }
   #panel { top: auto; bottom: 132px; left: 8px; right: 8px; width: auto; max-height: calc(62% - 132px); padding: 16px; }
   .big { font-size: 36px; }
 }
+
+.details { display: grid; gap: 6px; font-size: 14px; border-top: 1px solid var(--line); padding-top: 10px; }
+.details h3 { margin: 0; font-size: 15px; }
+.detail { background: #181b20; border-left: 4px solid var(--muted); border-radius: 6px; padding: 8px 10px; }
+.detail b { display: block; }
+.detail span { color: var(--muted); }
+.details .sub { margin: 0; color: var(--muted); font-size: 12px; }

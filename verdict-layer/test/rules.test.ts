@@ -148,3 +148,10 @@ test("nothing in the data model or default text mentions people or safety", asyn
   const blob = JSON.stringify(vs) + JSON.stringify(sample);
   assert.doesNotMatch(blob, /homeless|unsafe|\bsafe(ty)?\b|sketch|danger/i);
 });
+
+test("an outage on a redundant unit does not block the route, and says why", async () => {
+  const equipment = { ...sample.equipment, "EL-S59-2": { ...sample.equipment["EL-S59-2"]!, redundant: true } };
+  const v = get(await decideStop(stop("S59:uptown"), ctx({ equipment })), "step_free_now");
+  assert.equal(v.answer, "yes");
+  assert.ok(v.reasons.some((r) => /redundant/.test(r)));
+});

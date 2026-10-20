@@ -55,3 +55,11 @@ curl -X POST localhost:3000/ask -H 'content-type: application/json' \
 - **Contract addition to agree on:** `data_age_s` on every verdict, so the UI can show "data may not be current" (NFR4).
 
 `data/sample.json` is illustrative; IDs and numbers are made up and the feed is labeled as sample data in `sources`.
+
+## In the map app
+
+The static map app (`../index.html`, `../app.js`) shows these verdicts under the station card ("Can I trust it?"). It loads `../verdicts.js`, a browser bundle of `src/browser.ts`, so it needs no server or API key. **After changing anything in `src/`, rebuild and commit it:**
+
+```bash
+npm run build:browser
+```

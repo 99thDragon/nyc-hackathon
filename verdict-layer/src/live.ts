@@ -33,6 +33,7 @@ export interface EquipmentRow {
   nextadanorth: string;
   nextadasouth: string;
   alternativeroute: string;
+  redundant?: number;
 }
 
 // "10/19/2026 07:38:00 PM" in New York time -> ISO UTC. Returns null for anything else.
@@ -84,6 +85,7 @@ export function toEquipment(rows: EquipmentRow[], availability: Map<string, numb
       stationName: r.station,
       complexId: r.stationcomplexid,
       serving: r.serving,
+      redundant: r.redundant === 1,
     };
   }
   return out;

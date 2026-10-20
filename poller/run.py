@@ -87,7 +87,11 @@ def cmd_sync_equipment(args, conn):
     return 0
 
 
-WEB_DATA = os.path.join(os.path.dirname(HERE), "web", "data", "outages.json")
+# The repo root is the served static site (index.html, data/lines.json), so
+# the outage file lands beside the data the page already loads. Serving it
+# from our own origin is what the MTA terms ask for; the app may still prefer
+# its own live fetch.
+WEB_DATA = os.path.join(os.path.dirname(HERE), "data", "outages.json")
 
 
 def _publish(conn, result):

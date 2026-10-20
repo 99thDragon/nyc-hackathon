@@ -1,0 +1,15 @@
+{
+  "name": "router",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Subway A-to-B routing: McRAPTOR over the MTA GTFS timetable, ported from scaffold",
+  "scripts": {
+    "test": "node --test test/*.test.ts",
+    "typecheck": "tsc"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^7.0.2"
+  }
+}

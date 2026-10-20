@@ -127,3 +127,10 @@ h1 { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.01em; disp
   h1 { font-size: 18px; }
   .big { font-size: 32px; }
 }
+
+.details { display: grid; gap: 6px; font-size: 14px; border-top: 1px solid var(--line); padding-top: 10px; }
+.details h3 { margin: 0; font-size: 15px; }
+.detail { background: #181b20; border-left: 4px solid var(--muted); border-radius: 6px; padding: 8px 10px; }
+.detail b { display: block; }
+.detail span { color: var(--muted); }
+.details .sub { margin: 0; color: var(--muted); font-size: 12px; }

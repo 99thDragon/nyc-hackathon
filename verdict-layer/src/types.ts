@@ -46,6 +46,8 @@ export interface Unit {
   stationName?: string;
   complexId?: string;
   serving?: string;
+  // MTA marks another elevator as covering the same path.
+  redundant?: boolean;
 }
 
 export interface Outage {

@@ -1,6 +1,5 @@
 // Layer 1: rules (section 3.1 of the engineering notes). Code decides facts and clear cases.
 // The optional decision model only handles "no outage right now".
-import { randomUUID } from "node:crypto";
 import { bestAndWorst, rateCars } from "./cars.ts";
 import type {
   Context,
@@ -48,7 +47,7 @@ function make(
     reasons,
     official,
     sources,
-    trace_id: randomUUID(),
+    trace_id: crypto.randomUUID(),
     data_age_s,
   };
 }
@@ -96,7 +95,9 @@ export async function decideStop(stop: StopInput, ctx: Context): Promise<Verdict
 
   const units = stop.requiredUnitIds.map((id) => ctx.equipment[id]);
   const missing = stop.requiredUnitIds.filter((id) => !ctx.equipment[id]);
-  const current = ctx.feed.outages.filter((o) => !o.planned && stop.requiredUnitIds.includes(o.unitId));
+  const outNow = ctx.feed.outages.filter((o) => !o.planned && stop.requiredUnitIds.includes(o.unitId));
+  // An outage on a unit the MTA marks redundant does not block the route (same reading as the map app).
+  const current = outNow.filter((o) => !ctx.equipment[o.unitId]?.redundant);
   const planned = ctx.feed.outages.filter((o) => o.planned && stop.requiredUnitIds.includes(o.unitId));
   const arrivalMs = Date.parse(stop.arrivalAt);
 
@@ -126,7 +127,7 @@ export async function decideStop(stop: StopInput, ctx: Context): Promise<Verdict
     out.push(
       make("step_free_now", "yes", "rule",
         `Every elevator on this route at ${stop.name} is reporting in service.`,
-        [`${stop.requiredUnitIds.join(", ")} not in the current outage list`, ...(stop.ada === 2 ? ["Station is only partly accessible"] : []), ...warn],
+        [`${stop.requiredUnitIds.join(", ")} not in the current outage list`, ...(outNow.length > current.length ? [`${outNow.map((o) => o.unitId).join(", ")} is out, but the MTA marks it redundant`] : []), ...(stop.ada === 2 ? ["Station is only partly accessible"] : []), ...warn],
         { units: stop.requiredUnitIds }, [feedSource], age, 1),
     );
   }
@@ -193,9 +194,9 @@ export async function decideStop(stop: StopInput, ctx: Context): Promise<Verdict
     out.push(
       make("elevator_reliability", score, "rule",
         score === 1
-          ? `${worst.desc} was up only ${worst.availability90Pct}% of the last 90 days. Do not plan around it.`
-          : `Weakest elevator on this route was up ${worst.availability90Pct}% of the last 90 days.`,
-        known.map((u) => `${u.id}: ${u.availability90Pct}% over 90 days`),
+          ? `${worst.desc} was up only ${worst.availability90Pct}% over the last 3 months of MTA data. Do not plan around it.`
+          : `Weakest elevator on this route was up ${worst.availability90Pct}% over the last 3 months of MTA data.`,
+        known.map((u) => `${u.id}: ${u.availability90Pct}% over 3 months`),
         { units: known.map((u) => ({ id: u.id, availability90Pct: u.availability90Pct })) },
         [relSource], age),
     );

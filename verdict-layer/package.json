@@ -7,13 +7,15 @@
   "scripts": {
     "start": "node src/server.ts",
     "test": "node --test test/*.test.ts",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "build:browser": "esbuild src/browser.ts --bundle --format=iife --platform=browser --target=es2022 --minify --outfile=../verdicts.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "latest"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
+    "esbuild": "^0.28.2",
     "typescript": "^7.0.2"
   }
 }

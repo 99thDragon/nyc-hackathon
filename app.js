@@ -257,6 +257,62 @@ function showVerdict(c) {
       alt.append(btn, ` (${best.c.routes.join(" ")}), about ${mins} min walk.`);
     }
   }
+  loadDetails(c);
+}
+
+// ---------- trust details: reliability, arrival check, car (from verdicts.js) ----------
+// verdicts.js is built from verdict-layer/ (npm run build:browser). It reads the same live MTA feeds.
+
+const DETAIL_ROWS = {
+  elevator_working_at_arrival: "Working when you arrive",
+  elevator_reliability: "Elevator reliability",
+  which_car: "Which car",
+};
+
+function detailAnswer(v) {
+  if (v.answer === "not_enough_data") return "Not enough data";
+  if (v.verdict === "elevator_reliability") return v.answer + " / 5";
+  if (v.verdict === "which_car") return "Car " + v.answer;
+  return String(v.answer).toUpperCase();
+}
+
+async function loadDetails(c) {
+  const box = $("v-details");
+  if (box.dataset.id !== c.id) box.hidden = true; // don't show the previous station's details while loading
+  if (!window.MagicCarpetVerdicts || c.ada === 0) { box.hidden = true; return; }
+  try {
+    const verdicts = await window.MagicCarpetVerdicts.forStation(c.id);
+    if (selectedId !== c.id) return; // the rider picked another station while this loaded
+    if (!verdicts) { box.hidden = true; return; }
+    const heading = document.createElement("h3");
+    heading.textContent = "Can I trust it?";
+    const rows = verdicts.filter((v) => DETAIL_ROWS[v.verdict]).map((v) => {
+      const row = document.createElement("div");
+      row.className = "detail";
+      const label = document.createElement("b");
+      label.textContent = DETAIL_ROWS[v.verdict] + ": " + detailAnswer(v);
+      const why = document.createElement("span");
+      why.textContent = v.reason;
+      row.append(label, why);
+      return row;
+    });
+    const first = verdicts[0];
+    const note = document.createElement("p");
+    note.className = "sub";
+    const source = first.sources[0] ? first.sources[0].name : "MTA";
+    note.textContent = "Source: " + source + ". Checked " + first.data_age_s + " s ago" + (first.data_age_s > 60 ? ", data may not be current" : "") + ". Reliability uses the last 3 months of MTA availability data.";
+    box.replaceChildren(heading, ...rows, note);
+    box.dataset.id = c.id;
+    box.hidden = false;
+  } catch (err) {
+    if (selectedId === c.id) {
+      const msg = document.createElement("p");
+      msg.className = "sub";
+      msg.textContent = "Couldn't load reliability details (" + err.message + ").";
+      box.replaceChildren(msg);
+      box.hidden = false;
+    }
+  }
 }
 
 function select(id) {

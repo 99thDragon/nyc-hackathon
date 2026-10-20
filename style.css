@@ -82,6 +82,7 @@ h1 { margin: 0; font-size: 26px; letter-spacing: -0.01em; }
 .maplibregl-popup-tip { border-top-color: #15171b !important; }
 
 @media (max-width: 640px) {
-  #panel { top: auto; bottom: 0; left: 0; right: 0; width: auto; max-height: 55%; border-radius: 14px 14px 0 0; padding: 16px 16px 150px; }
+  /* Sit above the ElevenLabs voice button so it never covers the panel. */
+  #panel { top: auto; bottom: 132px; left: 8px; right: 8px; width: auto; max-height: calc(62% - 132px); padding: 16px; }
   .big { font-size: 36px; }
 }

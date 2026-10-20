@@ -2,6 +2,8 @@
 
 RevenueCat x Pursuit build night, Oct 19 2026. Proposal: [Magic Carpet.md](Magic%20Carpet.md).
 
+**Live: https://magic-carpet-nyc.vercel.app** (works on phones; redeploy with `npx vercel deploy --prod --yes`)
+
 ## Prototype (branch `feat/3d-map-prototype`)
 
 A 3D map of every NYC subway station that answers one question: **can I get to the train without stairs, right now?**

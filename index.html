@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Magic Carpet</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="map" aria-label="3D map of NYC subway stations"></div>
+
+<aside id="panel">
+  <header>
+    <h1>Magic Carpet</h1>
+    <p class="tag">Can I get to the train without stairs, right now?</p>
+  </header>
+
+  <label class="search">
+    <span class="sr">Find a station</span>
+    <input id="q" list="stations" placeholder="Type a station, e.g. 14 St" autocomplete="off">
+    <datalist id="stations"></datalist>
+  </label>
+
+  <section id="verdict" hidden>
+    <p class="station"><span id="v-name"></span> <span id="v-routes" class="routes"></span></p>
+    <p id="v-big" class="big"></p>
+    <p id="v-why" class="why"></p>
+    <div id="v-out"></div>
+    <div id="v-alt" class="alt" hidden></div>
+    <button class="pro" type="button" disabled>Alert me when this changes <b>PRO</b></button>
+  </section>
+
+  <section id="summary">
+    <p id="s-count" class="count">Loading live MTA data…</p>
+    <ul class="legend">
+      <li><i class="dot yes"></i>Step-free right now</li>
+      <li><i class="dot out"></i>Elevator out right now</li>
+      <li><i class="dot no"></i>Stairs only</li>
+    </ul>
+  </section>
+
+  <footer id="fresh">Data from the MTA. It may not be current.</footer>
+</aside>
+
+<!-- ElevenLabs voice agent "Magic Carpet": it calls get_station_verdict, handled in app.js -->
+<elevenlabs-convai agent-id="agent_6601m5bb35ptfxgt6qk19r5xzgrs" action-text="Ask by voice" start-call-text="Talk to Magic Carpet"></elevenlabs-convai>
+<script src="https://unpkg.com/@elevenlabs/convai-widget-embed@0.18.3" async></script>
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
